@@ -1,0 +1,149 @@
+/* Styles dla zegara Teleexpressu - tło ustawione w common.css */
+
+.teleexpress-clock {
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ROZMIAR TARCZY ZEGARA WZGLĘDEM NAJMNIEJSZEGO Z BOKÓW OKNA*/
+.zegar {
+    height: 81.4699vmin;
+    aspect-ratio: 1/1;
+    position: relative;
+}
+
+/*OGÓLNE FORMATOWANIE KROPEK*/
+.kropka {
+    position: absolute;
+    height: 2.4818%;
+    aspect-ratio: 1/1;
+    background-color: #ff3737;
+    border-radius: 50%;
+
+}
+
+
+/*KROPKI OZNACZAJĄCE SEKUNDY*/
+.kropka0	{left: 48.75%;	top: 0%;}
+.kropka0a	{left: 48.75%;	top: 3.06%;}
+.kropka1	{right: 43.66%;	top: .27%;}
+.kropka2	{right: 38.67%;	top: 1.07%;}
+.kropka3	{right: 33.69%;	top: 2.39%;}
+.kropka4	{right: 28.93%;	top: 4.22%;}
+.kropka5	{right: 24.38%;	top: 6.54%;}
+.kropka5a	{right: 25.92%;	top: 9.19%;}
+.kropka6	{right: 20.1%;  top: 9.32%;}
+.kropka7	{right: 16.14%;	top: 12.53%;}
+.kropka8	{right: 12.53%;	top: 16.14%;}
+.kropka9	{right: 9.32%;	top: 20.1%;}
+.kropka10	{right: 6.54%;	top: 24.38%;}
+.kropka10a	{right: 9.19%;	top: 25.92%;}
+.kropka11	{right: 4.22%;	top: 28.92%;}
+.kropka12	{right: 2.39%;	top: 33.65%;}
+.kropka13	{right: 1.07%;	top: 38.67%;}
+.kropka14	{right: .27%;	top: 43.66%;}
+.kropka15	{right: 0%;	    top: 48.76%;}
+.kropka15a	{right: 3.06%;	top: 48.75%;}
+.kropka16	{right: .27%;   bottom: 43.66%;}
+.kropka17	{right: 1.07%;  bottom: 38.67%;}
+.kropka18	{right: 2.39%;  bottom: 33.69%;}
+.kropka19	{right: 4.22%;  bottom: 28.93%;}
+.kropka20	{right: 6.54%;  bottom: 24.38%;}
+.kropka20a	{right: 9.19%;  bottom: 25.92%;}
+.kropka21	{right: 9.32%;  bottom: 20.1%;}
+.kropka22	{right: 12.53%; bottom: 16.14%;}
+.kropka23	{right: 16.14%; bottom: 12.53%;}
+.kropka24	{right: 20.1%;  bottom: 9.32%;}
+.kropka25	{right: 24.38%; bottom: 6.54%;}
+.kropka25a	{right: 25.92%; bottom: 9.19%;}
+.kropka26	{right: 28.92%; bottom: 4.22%;}
+.kropka27	{right: 33.65%; bottom: 2.39%;}
+.kropka28	{right: 38.67%; bottom: 1.07%;}
+.kropka29	{right: 43.66%; bottom: .27%;}
+.kropka30	{left: 48.75%;	bottom: 0%; }
+.kropka30a	{left: 48.75%;  bottom: 3.06%; }
+.kropka31	{left: 43.66%;	bottom: .27%; }
+.kropka32	{left: 38.67%;  bottom: 1.07%; }
+.kropka33	{left: 33.69%;	bottom: 2.39%; }
+.kropka34	{left: 28.93%;	bottom: 4.22%; }
+.kropka35	{left: 24.38%;	bottom: 6.54%; }
+.kropka35a	{left: 25.92%;	bottom: 9.19%; }
+.kropka36	{left: 20.1%;   bottom: 9.32%; }
+.kropka37	{left: 16.14%;  bottom: 12.53%; }
+.kropka38	{left: 12.53%;	bottom: 16.14%; }
+.kropka39	{left: 9.32%;	bottom: 20.1%; }
+.kropka40	{left: 6.54%;	bottom: 24.38%; }
+.kropka40a	{left: 9.19%;	bottom: 25.92%; }
+.kropka41	{left: 4.22%;	bottom: 28.92%; }
+.kropka42	{left: 2.39%;	bottom: 33.65%; }
+.kropka43	{left: 1.07%;	bottom: 38.67%; }
+.kropka44	{left: .27%;	bottom: 43.66%; }
+.kropka45	{left: 0%;      bottom: 48.76%; }
+.kropka45a	{left: 3.06%;	bottom: 48.75%; }
+.kropka46	{left: .27%;    top: 43.66%;}
+.kropka47	{left: 1.07%;   top: 38.67%;}
+.kropka48	{left: 2.39%;   top: 33.69%;}
+.kropka49	{left: 4.22%;   top: 28.93%;}
+.kropka50	{left: 6.54%;   top: 24.38%;}
+.kropka50a	{left: 9.19%;   top: 25.92%;}
+.kropka51	{left: 9.32%;   top: 20.1%;}
+.kropka52	{left: 12.53%;  top: 16.14%;}
+.kropka53	{left: 16.14%;  top: 12.53%;}
+.kropka54	{left: 20.1%;   top: 9.32%;}
+.kropka55	{left: 24.38%;  top: 6.54%;}
+.kropka55a	{left: 25.92%;  top: 9.19%;}
+.kropka56	{left: 28.92%;  top: 4.22%;}
+.kropka57	{left: 33.65%;  top: 2.39%;}
+.kropka58	{left: 38.67%;  top: 1.07%;}
+.kropka59	{left: 43.66%;  top: .27%;}
+
+/*KROPKI ZEGARA CYFROWEGO - GODZINY I MINUTY*/
+
+[class*="w0k"]              {top: 39.73%;}
+[class*="w1k"]              {top: 42.72%;}
+[class*="w2k"], .dwukropek1 {top: 45.74%;}
+[class*="w3k"]              {top: 48.75%;}
+[class*="w4k"], .dwukropek2 {bottom: 45.74%;}
+[class*="w5k"]              {bottom: 42.72%;}
+[class*="w6k"]              {bottom: 39.73%;}
+
+[class*="cyfra1"][class*="k0"] {left: 11.7%;}
+[class*="cyfra1"][class*="k1"] {left: 14.7%;}
+[class*="cyfra1"][class*="k2"] {left: 17.7%;}
+[class*="cyfra1"][class*="k3"] {left: 20.7%;}
+[class*="cyfra1"][class*="k4"] {left: 23.7%;}
+
+[class*="cyfra2"][class*="k0"] {left: 29.72%;}
+[class*="cyfra2"][class*="k1"] {left: 32.72%;}
+[class*="cyfra2"][class*="k2"] {left: 35.72%;}
+[class*="cyfra2"][class*="k3"] {left: 38.72%;}
+[class*="cyfra2"][class*="k4"] {left: 41.72%;}
+
+[class*="dwukropek"]           {left: 48.74%;}
+
+[class*="cyfra3"][class*="k0"] {right: 41.72%;}
+[class*="cyfra3"][class*="k1"] {right: 38.72%;}
+[class*="cyfra3"][class*="k2"] {right: 35.72%;}
+[class*="cyfra3"][class*="k3"] {right: 32.72%;}
+[class*="cyfra3"][class*="k4"] {right: 29.72%;}
+
+[class*="cyfra4"][class*="k0"] {right: 23.7%;}
+[class*="cyfra4"][class*="k1"] {right: 20.7%;}
+[class*="cyfra4"][class*="k2"] {right: 17.7%;}
+[class*="cyfra4"][class*="k3"] {right: 14.7%;}
+[class*="cyfra4"][class*="k4"] {right: 11.7%;}
+
+/*KLASY DO WŁĄCZANIA LUB WYŁĄCZANIA KROPEK*/
+.on  {
+   visibility: visible;
+    opacity: 1;
+}
+
+.off {
+    visibility: hidden;
+     opacity: 0;
+}
+

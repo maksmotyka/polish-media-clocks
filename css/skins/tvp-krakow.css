@@ -1,0 +1,59 @@
+/* =============================================================================
+   STYLE DLA ZEGARA TVP KRAKÓW
+   ============================================================================= */
+
+.tvp-krakow-clock {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url(../../clock-assets/tvp-krakow/background.png);
+    background-size: contain;
+    background-position: 50% 50%;
+    background-repeat: no-repeat;
+}
+
+.tvp-krakow-clock > * {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.tvp-krakow-clock > * > * {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-size: contain;
+    background-position: 50% 50%;
+    background-repeat: no-repeat;
+    transform-origin: 50% 50%;
+}
+
+.tvp-krakow-clock .second-hand {
+    z-index: 100;
+}
+
+.tvp-krakow-clock .second-hand-inner {
+    background-image: url(../../clock-assets/tvp-krakow/hand-second.png);
+}
+
+.tvp-krakow-clock .minute-hand {
+    z-index: 99;
+}
+
+.tvp-krakow-clock .minute-hand-inner {
+    background-image: url(../../clock-assets/tvp-krakow/hand-minute.png);
+}
+
+.tvp-krakow-clock .hour-hand {
+    z-index: 98;
+}
+
+.tvp-krakow-clock .hour-hand-inner {
+    background-image: url(../../clock-assets/tvp-krakow/hand-hour.png);
+}

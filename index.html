@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Zegar synchronizowany NTP - kolekcja stylów zegarów z historii polskiej telewizji i radia">
+    <title>Polish Media Clocks</title>
+
+    <!-- PWA Meta Tags -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Media Clocks">
+    <meta name="theme-color" content="#000000">
+
+    <!-- Manifest dla PWA -->
+    <link rel="manifest" href="manifest.json">
+
+    <!-- Favicons -->
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16x16.png">
+    <link rel="shortcut icon" href="assets/favicon.ico">
+
+    <!-- iOS Icons (squircle) -->
+    <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+
+    <!-- Wspólne style -->
+    <link rel="stylesheet" href="css/common.css">
+
+    <!-- CSS dla wybranej skórki zostanie załadowany dynamicznie -->
+</head>
+<body>
+    <!-- Kontener na zegar -->
+    <div id="clocks-container"></div>
+
+    <!-- Panel kontrolny -->
+    <div id="controls"></div>
+
+    <!-- Status synchronizacji (tworzony dynamicznie) -->
+
+    <!-- Moduły JavaScript -->
+    <script src="js/ntp-sync.js"></script>
+    <script src="js/skins/classic-clock.js"></script>
+    <script src="js/skins/teleexpress-clock.js"></script>
+    <script src="js/skins/tvp-1993-clock.js"></script>
+    <script src="js/skins/tvp-2012-clock.js"></script>
+    <script src="js/skins/tvp-krakow-clock.js"></script>
+    <script src="js/clock-manager.js"></script>
+
+    <!-- Inicjalizacja aplikacji -->
+    <script>
+        let clockManager;
+
+        window.onload = async function() {
+            clockManager = new ClockManager();
+            await clockManager.init();
+        };
+    </script>
+</body>
+</html>
