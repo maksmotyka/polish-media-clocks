@@ -12,7 +12,7 @@ class TVP1993Clock {
         this.container = container;
         this.render();
         this.setupElements();
-        this.updateLayout(true, true, false); // Ustaw domyślne tło (z logo)
+        this.updateLayout(true, true, true); // Ustaw domyślne tło (z logo)
         this.startUpdateLoop();
         return this;
     }
@@ -76,12 +76,12 @@ class TVP1993Clock {
         loop();
     }
 
-    updateLayout(showAnalog, showDigital, hideLogo) {
-        // Zmień tło w zależności od stanu checkboxa "Ukryj logo"
-        if (hideLogo) {
-            this.clockEl.style.backgroundImage = 'url(./clock-assets/tvp-1993/background-nologo.png)';
-        } else {
+    updateLayout(showAnalog, showDigital, showLogo) {
+        // Zmień tło w zależności od stanu checkboxa "Logo"
+        if (showLogo) {
             this.clockEl.style.backgroundImage = 'url(./clock-assets/tvp-1993/background.png)';
+        } else {
+            this.clockEl.style.backgroundImage = 'url(./clock-assets/tvp-1993/background-nologo.png)';
         }
     }
 

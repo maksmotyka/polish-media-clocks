@@ -101,6 +101,9 @@ class NTPSync {
         console.log(`Sync #${++this.syncCount} | Serwer: ${this.BACKEND_URL}`);
         console.log('='.repeat(40));
 
+        // Powiadom o rozpoczęciu synchronizacji
+        this.notifySyncStart(isResync);
+
         const oldOffset = this.timeOffset;
 
         try {
@@ -186,6 +189,12 @@ class NTPSync {
 
     onSync(callback) {
         this.onSyncCallback = callback;
+    }
+
+    notifySyncStart(isResync) {
+        if (this.onSyncCallback) {
+            this.onSyncCallback({ syncing: true }, isResync);
+        }
     }
 
     notifySyncComplete(isResync) {

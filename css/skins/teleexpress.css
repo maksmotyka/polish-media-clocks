@@ -136,6 +136,52 @@
 [class*="cyfra4"][class*="k3"] {right: 14.7%;}
 [class*="cyfra4"][class*="k4"] {right: 11.7%;}
 
+/*KROPKI ZEGARA CYFROWEGO - SEKUNDY (poniżej godzin i minut)*/
+
+/* Mniejszy rozmiar kropek dla sekund */
+[class*="cyfra5"],
+[class*="cyfra6"] {
+    height: 1.8%; /* Mniejsze kropki niż standardowe 2.4818% */
+}
+
+/* Cyfra 5 - pierwsza cyfra sekund (dziesiątki) */
+[class*="cyfra5"][class*="k0"] {left: 38.5%;}
+[class*="cyfra5"][class*="k1"] {left: 40.75%;}
+[class*="cyfra5"][class*="k2"] {left: 43%;}
+[class*="cyfra5"][class*="k3"] {left: 45.25%;}
+[class*="cyfra5"][class*="k4"] {left: 47.5%;}
+
+/* Cyfra 6 - druga cyfra sekund (jednostki) */
+[class*="cyfra6"][class*="k0"] {right: 47.5%;}
+[class*="cyfra6"][class*="k1"] {right: 45.25%;}
+[class*="cyfra6"][class*="k2"] {right: 43%;}
+[class*="cyfra6"][class*="k3"] {right: 40.75%;}
+[class*="cyfra6"][class*="k4"] {right: 38.5%;}
+
+/* Pozycjonowanie wierszy dla cyfr sekund */
+/* Mniejszy spacing ~2.18% (proporcjonalnie do mniejszego rozmiaru kropek 1.8% vs 2.4818%) */
+[class*="cyfra5"][class*="w0k"],
+[class*="cyfra6"][class*="w0k"] {top: 66.54%;} 
+
+[class*="cyfra5"][class*="w1k"],
+[class*="cyfra6"][class*="w1k"] {top: 68.72%;} 
+
+[class*="cyfra5"][class*="w2k"],
+[class*="cyfra6"][class*="w2k"] {top: 70.9%;} 
+
+[class*="cyfra5"][class*="w3k"],
+[class*="cyfra6"][class*="w3k"] {top: 73.08%;} 
+
+/* Dolna połowa cyfr - używa bottom (symetrycznie) */
+[class*="cyfra5"][class*="w4k"],
+[class*="cyfra6"][class*="w4k"] {bottom: 22.74%;} 
+
+[class*="cyfra5"][class*="w5k"],
+[class*="cyfra6"][class*="w5k"] {bottom: 20.56%;} /* 2.18 */
+
+[class*="cyfra5"][class*="w6k"],
+[class*="cyfra6"][class*="w6k"] {bottom: 18.38%;} 
+
 /*KLASY DO WŁĄCZANIA LUB WYŁĄCZANIA KROPEK*/
 .on  {
    visibility: visible;
@@ -143,7 +189,7 @@
 }
 
 .off {
-    visibility: hidden;
-     opacity: 0;
+    visibility: visible;
+    opacity: 0.08;
 }
 

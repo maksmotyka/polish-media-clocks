@@ -4,6 +4,7 @@
 
 class ClockManager {
     constructor() {
+        this.VERSION = '2.1.0';
         this.ntpSync = null;
         this.currentClock = null;
         this.currentSkin = 'classic';
@@ -23,7 +24,8 @@ class ClockManager {
                 cssFile: 'css/skins/teleexpress.css',
                 class: TeleexpressClock,
                 hasAnalogOption: false,
-                hasDigitalOption: false
+                hasDigitalOption: false,
+                hasBackgroundOption: true
             },
             'tvp-1993': {
                 name: 'TVP 1993-2012',
@@ -31,7 +33,8 @@ class ClockManager {
                 class: TVP1993Clock,
                 hasAnalogOption: false,
                 hasDigitalOption: false,
-                hasLogoOption: true
+                hasLogoOption: true,
+                hasBackgroundOption: true
             },
             'tvp-2012': {
                 name: 'TVP 2012-dziś',
@@ -79,6 +82,9 @@ class ClockManager {
 
         // Renderowanie interfejsu kontrolnego
         this.renderControls();
+
+        // Sprawdź wersję i pokaż powiadomienie jeśli nowa
+        this.checkVersion();
 
         // Synchronizacja czasu
         await this.ntpSync.initializeTimeSync(false);
@@ -141,6 +147,10 @@ class ClockManager {
         // Usuń poprzednią klasę skórki z body
         document.body.className = document.body.className.replace(/skin-\S+/g, '').trim();
 
+        // Resetuj inline style tła (usuń customowe ustawienia z poprzedniej skórki)
+        document.body.style.backgroundImage = '';
+        document.body.style.backgroundColor = '';
+
         // Dodaj nową klasę skórki do body
         document.body.classList.add(`skin-${skinName}`);
 
@@ -202,9 +212,32 @@ class ClockManager {
             <div id="classic-controls" style="margin-top: 10px;">
                 <label><input type="checkbox" id="show-analog" checked> Analogowy</label>
                 <label><input type="checkbox" id="show-digital" checked> Cyfrowy</label>
+                <hr style="border-color: rgba(255,255,255,0.3); margin: 10px 0;">
+                <label><input type="checkbox" id="enable-background" checked> Tło</label>
+                <label id="background-color-label" style="margin-top: 10px; display: none; align-items: center; gap: 10px;">
+                    <span>Kolor tła:</span>
+                    <input type="color" id="background-color" value="#000000" style="width: 60px; height: 30px; cursor: pointer; border: 1px solid rgba(255,255,255,0.3); border-radius: 3px;">
+                </label>
             </div>
             <div id="tvp1993-controls" style="margin-top: 10px;">
-                <label><input type="checkbox" id="hide-logo"> Ukryj logo</label>
+                <label><input type="checkbox" id="show-logo" checked> Logo</label>
+                <hr style="border-color: rgba(255,255,255,0.3); margin: 10px 0;">
+                <label><input type="checkbox" id="tvp1993-enable-background" checked> Predefiniowane tło</label>
+                <label id="tvp1993-background-color-label" style="margin-top: 10px; display: none; align-items: center; gap: 10px;">
+                    <span>Kolor tła:</span>
+                    <input type="color" id="tvp1993-background-color" value="#0020c5" style="width: 60px; height: 30px; cursor: pointer; border: 1px solid rgba(255,255,255,0.3); border-radius: 3px;">
+                </label>
+                <button id="tvp1993-reset-bg" style="margin-top: 10px; padding: 8px; cursor: pointer; width: 100%; display: none;">Resetuj ustawienia tła</button>
+            </div>
+            <div id="teleexpress-controls" style="margin-top: 10px;">
+                <label><input type="checkbox" id="show-seconds" checked> Sekundy</label>
+                <hr style="border-color: rgba(255,255,255,0.3); margin: 10px 0;">
+                <label><input type="checkbox" id="teleexpress-enable-background" checked> Predefiniowane tło</label>
+                <label id="teleexpress-background-color-label" style="margin-top: 10px; display: none; align-items: center; gap: 10px;">
+                    <span>Kolor tła:</span>
+                    <input type="color" id="teleexpress-background-color" value="#000000" style="width: 60px; height: 30px; cursor: pointer; border: 1px solid rgba(255,255,255,0.3); border-radius: 3px;">
+                </label>
+                <button id="teleexpress-reset-bg" style="margin-top: 10px; padding: 8px; cursor: pointer; width: 100%; display: none;">Resetuj ustawienia tła</button>
             </div>
             <hr style="border-color: rgba(255,255,255,0.3); margin: 10px 0;">
             <label><input type="checkbox" id="enable-pips"> GUM</label>
@@ -235,9 +268,98 @@ class ClockManager {
             digitalCheckbox.addEventListener('change', () => this.updateLayout());
         }
 
-        const hideLogoCheckbox = document.getElementById('hide-logo');
-        if (hideLogoCheckbox) {
-            hideLogoCheckbox.addEventListener('change', () => this.updateLayout());
+        const showLogoCheckbox = document.getElementById('show-logo');
+        if (showLogoCheckbox) {
+            showLogoCheckbox.addEventListener('change', () => {
+                this.updateLayout();
+                this.saveLogoSettings();
+            });
+        }
+
+        const tvp1993EnableBackgroundCheckbox = document.getElementById('tvp1993-enable-background');
+        const tvp1993BackgroundColorPicker = document.getElementById('tvp1993-background-color');
+        const tvp1993BackgroundColorLabel = document.getElementById('tvp1993-background-color-label');
+        const tvp1993ResetButton = document.getElementById('tvp1993-reset-bg');
+
+        if (tvp1993EnableBackgroundCheckbox) {
+            tvp1993EnableBackgroundCheckbox.addEventListener('change', () => {
+                this.updateTVP1993BackgroundSettings();
+                if (tvp1993BackgroundColorLabel) {
+                    tvp1993BackgroundColorLabel.style.display = tvp1993EnableBackgroundCheckbox.checked ? 'none' : 'flex';
+                }
+                if (tvp1993ResetButton) {
+                    tvp1993ResetButton.style.display = tvp1993EnableBackgroundCheckbox.checked ? 'none' : 'block';
+                }
+            });
+        }
+
+        if (tvp1993BackgroundColorPicker) {
+            tvp1993BackgroundColorPicker.addEventListener('input', () => {
+                this.updateTVP1993BackgroundSettings();
+            });
+        }
+
+        if (tvp1993ResetButton) {
+            tvp1993ResetButton.addEventListener('click', () => {
+                this.resetTVP1993Background();
+            });
+        }
+
+        const enableBackgroundCheckbox = document.getElementById('enable-background');
+        const backgroundColorPicker = document.getElementById('background-color');
+        const backgroundColorLabel = document.getElementById('background-color-label');
+
+        if (enableBackgroundCheckbox) {
+            enableBackgroundCheckbox.addEventListener('change', () => {
+                this.updateBackgroundSettings();
+                // Pokaż/ukryj color picker
+                if (backgroundColorLabel) {
+                    backgroundColorLabel.style.display = enableBackgroundCheckbox.checked ? 'none' : 'flex';
+                }
+            });
+        }
+
+        if (backgroundColorPicker) {
+            backgroundColorPicker.addEventListener('input', () => {
+                this.updateBackgroundSettings();
+            });
+        }
+
+        const showSecondsCheckbox = document.getElementById('show-seconds');
+        if (showSecondsCheckbox) {
+            showSecondsCheckbox.addEventListener('change', () => {
+                this.updateLayout();
+                this.saveSecondsSettings();
+            });
+        }
+
+        const teleexpressEnableBackgroundCheckbox = document.getElementById('teleexpress-enable-background');
+        const teleexpressBackgroundColorPicker = document.getElementById('teleexpress-background-color');
+        const teleexpressBackgroundColorLabel = document.getElementById('teleexpress-background-color-label');
+        const teleexpressResetButton = document.getElementById('teleexpress-reset-bg');
+
+        if (teleexpressEnableBackgroundCheckbox) {
+            teleexpressEnableBackgroundCheckbox.addEventListener('change', () => {
+                this.updateTeleexpressBackgroundSettings();
+                if (teleexpressBackgroundColorLabel) {
+                    teleexpressBackgroundColorLabel.style.display = teleexpressEnableBackgroundCheckbox.checked ? 'none' : 'flex';
+                }
+                if (teleexpressResetButton) {
+                    teleexpressResetButton.style.display = teleexpressEnableBackgroundCheckbox.checked ? 'none' : 'block';
+                }
+            });
+        }
+
+        if (teleexpressBackgroundColorPicker) {
+            teleexpressBackgroundColorPicker.addEventListener('input', () => {
+                this.updateTeleexpressBackgroundSettings();
+            });
+        }
+
+        if (teleexpressResetButton) {
+            teleexpressResetButton.addEventListener('click', () => {
+                this.resetTeleexpressBackground();
+            });
         }
 
         document.getElementById('show-status').addEventListener('change', () => {
@@ -256,6 +378,7 @@ class ClockManager {
     updateControlsVisibility() {
         const classicControls = document.getElementById('classic-controls');
         const tvp1993Controls = document.getElementById('tvp1993-controls');
+        const teleexpressControls = document.getElementById('teleexpress-controls');
         const skin = this.skins[this.currentSkin];
 
         if (classicControls) {
@@ -263,8 +386,282 @@ class ClockManager {
         }
 
         if (tvp1993Controls) {
-            tvp1993Controls.style.display = skin.hasLogoOption ? 'block' : 'none';
+            tvp1993Controls.style.display = this.currentSkin === 'tvp-1993' ? 'block' : 'none';
         }
+
+        if (teleexpressControls) {
+            teleexpressControls.style.display = this.currentSkin === 'teleexpress' ? 'block' : 'none';
+        }
+
+        // Przywróć zapisane ustawienia tła dla classic
+        if (this.currentSkin === 'classic') {
+            this.restoreBackgroundSettings();
+        }
+
+        // Przywróć zapisane ustawienia logo dla tvp-1993
+        if (this.currentSkin === 'tvp-1993') {
+            this.restoreLogoSettings();
+        }
+
+        // Przywróć zapisane ustawienia tła dla teleexpress
+        if (this.currentSkin === 'teleexpress') {
+            this.restoreTeleexpressBackgroundSettings();
+            this.restoreSecondsSettings();
+        }
+
+        // Przywróć zapisane ustawienia tła dla tvp-1993
+        if (this.currentSkin === 'tvp-1993') {
+            this.restoreTVP1993BackgroundSettings();
+        }
+    }
+
+    saveSecondsSettings() {
+        const showSecondsCheckbox = document.getElementById('show-seconds');
+        if (!showSecondsCheckbox) return;
+
+        const showSeconds = showSecondsCheckbox.checked;
+        localStorage.setItem('teleexpress-show-seconds', showSeconds);
+    }
+
+    restoreSecondsSettings() {
+        const showSecondsCheckbox = document.getElementById('show-seconds');
+        if (!showSecondsCheckbox) return;
+
+        // Odczytaj zapisane ustawienia (domyślnie sekundy są włączone)
+        const savedShowSeconds = localStorage.getItem('teleexpress-show-seconds') !== 'false';
+
+        // Ustaw wartość kontrolki
+        showSecondsCheckbox.checked = savedShowSeconds;
+
+        // Zastosuj ustawienia
+        this.updateLayout();
+    }
+
+    saveLogoSettings() {
+        const showLogoCheckbox = document.getElementById('show-logo');
+        if (!showLogoCheckbox) return;
+
+        const showLogo = showLogoCheckbox.checked;
+        localStorage.setItem('tvp1993-show-logo', showLogo);
+    }
+
+    restoreLogoSettings() {
+        const showLogoCheckbox = document.getElementById('show-logo');
+        if (!showLogoCheckbox) return;
+
+        // Odczytaj zapisane ustawienia (domyślnie logo jest włączone)
+        const savedShowLogo = localStorage.getItem('tvp1993-show-logo') !== 'false';
+
+        // Ustaw wartość kontrolki
+        showLogoCheckbox.checked = savedShowLogo;
+
+        // Zastosuj ustawienia
+        this.updateLayout();
+    }
+
+    updateBackgroundSettings() {
+        const enableBackgroundCheckbox = document.getElementById('enable-background');
+        const backgroundColorPicker = document.getElementById('background-color');
+
+        if (!enableBackgroundCheckbox || !backgroundColorPicker) return;
+
+        const enableBackground = enableBackgroundCheckbox.checked;
+        const backgroundColor = backgroundColorPicker.value;
+
+        // Zapisz ustawienia w localStorage
+        localStorage.setItem('classic-enable-background', enableBackground);
+        localStorage.setItem('classic-background-color', backgroundColor);
+
+        // Zastosuj ustawienia
+        if (enableBackground) {
+            document.body.style.backgroundImage = 'url(clock-assets/classic/background.jpg)';
+            document.body.style.backgroundColor = '';
+        } else {
+            document.body.style.backgroundImage = 'none';
+            document.body.style.backgroundColor = backgroundColor;
+        }
+    }
+
+    restoreBackgroundSettings() {
+        const enableBackgroundCheckbox = document.getElementById('enable-background');
+        const backgroundColorPicker = document.getElementById('background-color');
+        const backgroundColorLabel = document.getElementById('background-color-label');
+
+        if (!enableBackgroundCheckbox || !backgroundColorPicker) return;
+
+        // Odczytaj zapisane ustawienia (domyślnie tło jest włączone)
+        const savedEnableBackground = localStorage.getItem('classic-enable-background') !== 'false';
+        const savedBackgroundColor = localStorage.getItem('classic-background-color') || '#000000';
+
+        // Ustaw wartości kontrolek
+        enableBackgroundCheckbox.checked = savedEnableBackground;
+        backgroundColorPicker.value = savedBackgroundColor;
+
+        // Pokaż/ukryj color picker w zależności od stanu tła
+        if (backgroundColorLabel) {
+            backgroundColorLabel.style.display = savedEnableBackground ? 'none' : 'flex';
+        }
+
+        // Zastosuj ustawienia
+        this.updateBackgroundSettings();
+    }
+
+    updateTeleexpressBackgroundSettings() {
+        const enableBackgroundCheckbox = document.getElementById('teleexpress-enable-background');
+        const backgroundColorPicker = document.getElementById('teleexpress-background-color');
+
+        if (!enableBackgroundCheckbox || !backgroundColorPicker) return;
+
+        const enableBackground = enableBackgroundCheckbox.checked;
+        const backgroundColor = backgroundColorPicker.value;
+
+        // Zapisz ustawienia w localStorage
+        localStorage.setItem('teleexpress-enable-background', enableBackground);
+        localStorage.setItem('teleexpress-background-color', backgroundColor);
+
+        // Zastosuj ustawienia (czarne tło jest domyślne dla Teleexpress)
+        if (enableBackground) {
+            document.body.style.backgroundColor = '#000';
+        } else {
+            document.body.style.backgroundColor = backgroundColor;
+        }
+    }
+
+    restoreTeleexpressBackgroundSettings() {
+        const enableBackgroundCheckbox = document.getElementById('teleexpress-enable-background');
+        const backgroundColorPicker = document.getElementById('teleexpress-background-color');
+        const backgroundColorLabel = document.getElementById('teleexpress-background-color-label');
+        const resetButton = document.getElementById('teleexpress-reset-bg');
+
+        if (!enableBackgroundCheckbox || !backgroundColorPicker) return;
+
+        // Odczytaj zapisane ustawienia (domyślnie tło czarne jest włączone)
+        const savedEnableBackground = localStorage.getItem('teleexpress-enable-background') !== 'false';
+        const savedBackgroundColor = localStorage.getItem('teleexpress-background-color') || '#000000';
+
+        // Ustaw wartości kontrolek
+        enableBackgroundCheckbox.checked = savedEnableBackground;
+        backgroundColorPicker.value = savedBackgroundColor;
+
+        // Pokaż/ukryj color picker i przycisk resetowania w zależności od stanu tła
+        if (backgroundColorLabel) {
+            backgroundColorLabel.style.display = savedEnableBackground ? 'none' : 'flex';
+        }
+        if (resetButton) {
+            resetButton.style.display = savedEnableBackground ? 'none' : 'block';
+        }
+
+        // Zastosuj ustawienia
+        this.updateTeleexpressBackgroundSettings();
+    }
+
+    resetTeleexpressBackground() {
+        // Resetuj do domyślnych wartości
+        localStorage.removeItem('teleexpress-enable-background');
+        localStorage.removeItem('teleexpress-background-color');
+
+        // Przywróć domyślne ustawienia
+        this.restoreTeleexpressBackgroundSettings();
+    }
+
+    updateTVP1993BackgroundSettings() {
+        const enableBackgroundCheckbox = document.getElementById('tvp1993-enable-background');
+        const backgroundColorPicker = document.getElementById('tvp1993-background-color');
+
+        if (!enableBackgroundCheckbox || !backgroundColorPicker) return;
+
+        const enableBackground = enableBackgroundCheckbox.checked;
+        const backgroundColor = backgroundColorPicker.value;
+
+        // Zapisz ustawienia w localStorage
+        localStorage.setItem('tvp1993-enable-background', enableBackground);
+        localStorage.setItem('tvp1993-background-color', backgroundColor);
+
+        // Zastosuj ustawienia (niebieski kolor rgb(0, 32, 197) jest domyślny dla TVP 1993)
+        if (enableBackground) {
+            document.body.style.backgroundColor = 'rgb(0, 32, 197)';
+        } else {
+            document.body.style.backgroundColor = backgroundColor;
+        }
+    }
+
+    restoreTVP1993BackgroundSettings() {
+        const enableBackgroundCheckbox = document.getElementById('tvp1993-enable-background');
+        const backgroundColorPicker = document.getElementById('tvp1993-background-color');
+        const backgroundColorLabel = document.getElementById('tvp1993-background-color-label');
+        const resetButton = document.getElementById('tvp1993-reset-bg');
+
+        if (!enableBackgroundCheckbox || !backgroundColorPicker) return;
+
+        // Odczytaj zapisane ustawienia (domyślnie niebieski background jest włączony)
+        const savedEnableBackground = localStorage.getItem('tvp1993-enable-background') !== 'false';
+        const savedBackgroundColor = localStorage.getItem('tvp1993-background-color') || '#0020c5';
+
+        // Ustaw wartości kontrolek
+        enableBackgroundCheckbox.checked = savedEnableBackground;
+        backgroundColorPicker.value = savedBackgroundColor;
+
+        // Pokaż/ukryj color picker i przycisk resetowania w zależności od stanu tła
+        if (backgroundColorLabel) {
+            backgroundColorLabel.style.display = savedEnableBackground ? 'none' : 'flex';
+        }
+        if (resetButton) {
+            resetButton.style.display = savedEnableBackground ? 'none' : 'block';
+        }
+
+        // Zastosuj ustawienia
+        this.updateTVP1993BackgroundSettings();
+    }
+
+    resetTVP1993Background() {
+        // Resetuj do domyślnych wartości
+        localStorage.removeItem('tvp1993-enable-background');
+        localStorage.removeItem('tvp1993-background-color');
+
+        // Przywróć domyślne ustawienia
+        this.restoreTVP1993BackgroundSettings();
+    }
+
+    checkVersion() {
+        const lastSeenVersion = localStorage.getItem('last-seen-version');
+
+        if (lastSeenVersion !== this.VERSION) {
+            this.showVersionNotification();
+        }
+    }
+
+    showVersionNotification() {
+        // Sprawdź czy powiadomienie już istnieje
+        let notification = document.getElementById('version-notification');
+
+        if (!notification) {
+            notification = document.createElement('div');
+            notification.id = 'version-notification';
+            notification.innerHTML = `
+                <strong>Aplikacja została uaktualniona do wersji ${this.VERSION}!</strong><br>
+                <span style="font-size: 12px;">Sprawdź co nowego!</span>
+            `;
+            document.body.appendChild(notification);
+
+            // Kliknięcie otwiera okno "O projekcie"
+            notification.addEventListener('click', () => {
+                this.showAboutDialog();
+                this.hideVersionNotification();
+            });
+        }
+
+        // Pokaż powiadomienie
+        notification.classList.remove('hidden');
+    }
+
+    hideVersionNotification() {
+        const notification = document.getElementById('version-notification');
+        if (notification) {
+            notification.classList.add('hidden');
+        }
+
+        // Zapisz obecną wersję
+        localStorage.setItem('last-seen-version', this.VERSION);
     }
 
     updateLayout() {
@@ -272,9 +669,10 @@ class ClockManager {
 
         const showAnalog = document.getElementById('show-analog')?.checked ?? true;
         const showDigital = document.getElementById('show-digital')?.checked ?? true;
-        const hideLogo = document.getElementById('hide-logo')?.checked ?? false;
+        const showLogo = document.getElementById('show-logo')?.checked ?? true;
+        const showSeconds = document.getElementById('show-seconds')?.checked ?? true;
 
-        this.currentClock.updateLayout(showAnalog, showDigital, hideLogo);
+        this.currentClock.updateLayout(showAnalog, showDigital, showLogo, showSeconds);
     }
 
     updateSyncStatus(status, isResync) {
@@ -285,11 +683,16 @@ class ClockManager {
             document.body.appendChild(statusDiv);
         }
 
-        if (isResync) {
+        // Jeśli status.syncing === true, pokaż komunikat o synchronizacji
+        if (status.syncing) {
             statusDiv.classList.remove('hidden');
             statusDiv.classList.add('syncing');
-            statusDiv.innerHTML = '🔄 <strong>Synchronizuję...</strong>';
+            statusDiv.innerHTML = '🔄 <strong>Synchronizuję czas...</strong>';
+            return;
         }
+
+        // Usuń klasę syncing i pokaż właściwy status
+        statusDiv.classList.remove('syncing');
 
         const statusIcons = {
             'ntp-primary': '🟢',
@@ -313,8 +716,6 @@ class ClockManager {
 
         statusDiv.innerHTML = `${icon} <strong>${label}</strong><br>
                                <small>${status.ntpServerUsed}${offsetText}</small>`;
-
-        statusDiv.classList.remove('syncing');
 
         const showStatusCheckbox = document.getElementById('show-status');
         if (showStatusCheckbox && !showStatusCheckbox.checked &&
@@ -442,12 +843,13 @@ class ClockManager {
         `;
 
         modal.innerHTML = `
-            <h2 style="margin-top: 0; text-align: center; font-size: 24px;">
-                🕰️ Polish Media Clocks
+            <h2 style="margin-top: 0; text-align: center; font-size: 24px; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                <img src="assets/favicon.ico" alt="Clock icon" style="width: 32px; height: 32px;">
+                Polish Media Clocks
             </h2>
 
             <div style="text-align: center; margin: 15px 0; padding: 10px; background: rgba(255,255,255,0.1); border-radius: 8px;">
-                <strong>Wersja:</strong> 2.0.0
+                <strong>Wersja:</strong> ${this.VERSION}
             </div>
 
             <h3 style="font-size: 18px; margin-top: 20px; border-bottom: 2px solid rgba(255,255,255,0.3); padding-bottom: 5px;">
@@ -460,12 +862,23 @@ class ClockManager {
             </p>
 
             <h3 style="font-size: 18px; margin-top: 20px; border-bottom: 2px solid rgba(255,255,255,0.3); padding-bottom: 5px;">
+                Co nowego w wersji 2.1.0
+            </h3>
+            <ul style="line-height: 1.8;">
+                <li>Dodano kontrolki koloru tła dla zegarów: Polskiego Radia, Teleexpressu oraz TVP 1993-2012</li>
+                <li>Zmieniono kontrolkę logo TVP na bardziej intuicyjną</li>
+                <li>Naprawiono błąd, który nie pokazywał wskaźnika synchronizacji czasu. Sam wskaźnik od teraz również pulsuje w trakcie synchronizacji</li>
+                <li>Zegar Teleexpressu wyświetla liczbę sekund (możliwą do wyłączenia w Opcjach)</li>
+                <li>Dodano system powiadomień o nowych wersjach</li>
+            </ul>
+
+            <h3 style="font-size: 18px; margin-top: 20px; border-bottom: 2px solid rgba(255,255,255,0.3); padding-bottom: 5px;">
                 Dostępne style
             </h3>
             <ul style="line-height: 1.8;">
                 <li><strong>Polskie Radio (Favag + Cyfrowy)</strong> - Zegar analogowy i cyfrowy Polskiego Radia</li>
-                <li><strong>Teleexpress (Kropkowy)</strong> - Kropkowy zegar z kultowego programu TVP</li>
-                <li><strong>TVP 1993-2012</strong> - Klasyczny zegar TVP z charakterystyczną animacją elastic</li>
+                <li><strong>Teleexpress (Kropkowy)</strong> - Kropkowy zegar z kultowego programu TVP - zaprojektowany przez użytkownika <a href="https://github.com/qdnl/qdnl.github.io/tree/main/tex" target="_blank" style="color: white; text-decoration: underline;"><code>qdnl</code></a></li>
+                <li><strong>TVP 1993-2012</strong> - Klasyczny zegar TVP</li>
                 <li><strong>TVP 2012-dziś</strong> - Współczesny zegar TVP</li>
                 <li><strong>TVP Kraków (90s)</strong> - Regionalny zegar TVP Kraków</li>
             </ul>
@@ -494,6 +907,10 @@ class ClockManager {
             </p>
             <p style="line-height: 1.6; font-size: 14px;">
                 Kod źródłowy projektu udostępniony jest wyłącznie w celach edukacyjnych i hobbystycznych.
+            </p>
+
+            <p style="line-height: 1.6; font-size: 14px;" align="center">
+                © Maksymilian Motyka 2025
             </p>
 
             <div style="text-align: center; margin-top: 25px;">
@@ -543,6 +960,10 @@ class ClockManager {
         closeBtn.addEventListener('mouseleave', () => {
             closeBtn.style.backgroundColor = 'rgba(255,255,255,0.2)';
         });
+    }
+
+    showAboutDialog() {
+        this.showAbout();
     }
 }
 

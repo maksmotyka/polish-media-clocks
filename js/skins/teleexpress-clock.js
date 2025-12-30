@@ -46,7 +46,7 @@ class TeleexpressClock {
     renderDigitalDisplay() {
         let html = '';
 
-        // 4 cyfry (HH:MM)
+        // 4 cyfry godzin i minut (HH:MM)
         for (let digit = 1; digit <= 4; digit++) {
             // Każda cyfra to siatka 7x5
             for (let row = 0; row < 7; row++) {
@@ -61,6 +61,15 @@ class TeleexpressClock {
             }
         }
 
+        // 2 cyfry sekund (SS) - poniżej godzin i minut
+        for (let digit = 5; digit <= 6; digit++) {
+            for (let row = 0; row < 7; row++) {
+                for (let col = 0; col < 5; col++) {
+                    html += `<div class="kropka cyfra${digit}w${row}k${col} on" id="cyfra${digit}w${row}k${col}"></div>`;
+                }
+            }
+        }
+
         return html;
     }
 
@@ -71,9 +80,9 @@ class TeleexpressClock {
             this.kropka[i] = document.getElementById(`kropka${i}`);
         }
 
-        // Inicjalizacja referencji do kropek cyfrowych (4 cyfry x 7 wierszy x 5 kolumn)
+        // Inicjalizacja referencji do kropek cyfrowych (6 cyfr: HH:MM:SS x 7 wierszy x 5 kolumn)
         this.cyfra = [];
-        for (let digit = 0; digit < 4; digit++) {
+        for (let digit = 0; digit < 6; digit++) {
             this.cyfra[digit] = [];
             for (let row = 0; row < 7; row++) {
                 this.cyfra[digit][row] = [];
@@ -107,8 +116,8 @@ class TeleexpressClock {
     }
 
     wylaczWszystko() {
-        // Wyłącz wszystkie kropki cyfr
-        for (let i = 0; i < 4; i++) {
+        // Wyłącz wszystkie kropki cyfr (6 cyfr: HH:MM:SS)
+        for (let i = 0; i < 6; i++) {
             for (let j = 0; j < 7; j++) {
                 for (let k = 0; k < 5; k++) {
                     this.wylaczC(i, j, k);
@@ -225,11 +234,17 @@ class TeleexpressClock {
         const czas = this.ntpSync.getSyncedTime();
         const godziny = czas.getHours();
         const minuty = czas.getMinutes();
+        const sekundy = czas.getSeconds();
 
+        // Rysuj godziny i minuty (HH:MM)
         this.rysujCyfre(0, Math.floor(godziny / 10) % 10);
         this.rysujCyfre(1, godziny % 10);
         this.rysujCyfre(2, Math.floor(minuty / 10) % 10);
         this.rysujCyfre(3, minuty % 10);
+
+        // Rysuj sekundy (SS)
+        this.rysujCyfre(4, Math.floor(sekundy / 10) % 10);
+        this.rysujCyfre(5, sekundy % 10);
     }
 
     rysujSekundy() {
@@ -257,9 +272,20 @@ class TeleexpressClock {
         this.updateClock();
     }
 
-    updateLayout(showAnalog, showDigital) {
-        // Teleexpress clock nie używa tych opcji - zawsze pokazuje swój styl
-        // Możemy to zostawić puste lub dodać własną logikę jeśli potrzeba
+    updateLayout(showAnalog, showDigital, _showLogo, showSeconds) {
+        // Pokaż/ukryj cyfry sekund
+        if (showSeconds !== undefined) {
+            for (let digit = 4; digit < 6; digit++) {
+                for (let row = 0; row < 7; row++) {
+                    for (let col = 0; col < 5; col++) {
+                        const element = this.cyfra[digit][row][col];
+                        if (element) {
+                            element.style.display = showSeconds ? '' : 'none';
+                        }
+                    }
+                }
+            }
+        }
     }
 
     destroy() {
