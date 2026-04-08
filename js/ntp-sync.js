@@ -42,6 +42,7 @@ class NTPSync {
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 8000);
 
+            const t1 = Date.now();
             const response = await fetch(this.BACKEND_URL, {
                 signal: controller.signal,
                 cache: 'no-cache'
@@ -51,18 +52,22 @@ class NTPSync {
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
             const data = await response.json();
+            const t4 = Date.now();
+
             if (!data.success) throw new Error(data.error || 'Uwaga! Serwer zwrócił błąd.');
 
             const serverTime = new Date(data.timestamp);
+            const rtt = t4 - t1;
             this.ntpServerUsed = data.source;
 
             console.log(`✓ Połączono z NTP GUM: ${data.source}`);
             console.log(`  Czas NTP: ${serverTime.toISOString()}`);
             console.log(`  Typ serwera: ${data.serverType}`);
-            console.log(`  Opóźnienie: ${(data.delay * 1000).toFixed(2)}ms`);
+            console.log(`  RTT HTTP: ${rtt}ms (korekta: +${(rtt / 2).toFixed(1)}ms)`);
+            console.log(`  Opóźnienie NTP: ${(data.delay * 1000).toFixed(2)}ms`);
             console.log(`  Offset NTP: ${(data.offset * 1000).toFixed(2)}ms`);
 
-            return { time: serverTime, type: data.serverType };
+            return { time: serverTime, type: data.serverType, t4, rtt };
         } catch (error) {
             console.error('✗ Błąd połączenia ze wzorcem czasu:', error.message);
             throw error;
@@ -75,6 +80,7 @@ class NTPSync {
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 5000);
 
+            const t1 = Date.now();
             const response = await fetch(server.url, {
                 signal: controller.signal,
                 cache: 'no-cache'
@@ -84,9 +90,12 @@ class NTPSync {
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
             const data = await response.json();
+            const t4 = Date.now();
+            const rtt = t4 - t1;
+
             const serverTime = server.parse(data);
-            console.log(`✓ Połączono z ${server.name}`);
-            return serverTime;
+            console.log(`✓ Połączono z ${server.name} (RTT: ${rtt}ms)`);
+            return { time: serverTime, t4, rtt };
         } catch (error) {
             console.error(`✗ Błąd ${server.name}:`, error.message);
             throw error;
@@ -108,8 +117,8 @@ class NTPSync {
 
         try {
             const result = await this.fetchTimeFromNTP();
-            const localTime = new Date();
-            this.timeOffset = result.time.getTime() - localTime.getTime();
+            // Korekcja half-RTT: offset = serverTime - (t1 + RTT/2) = serverTime - t4 + RTT/2
+            this.timeOffset = result.time.getTime() - result.t4 + result.rtt / 2;
             this.timeSourceUsed = result.type === 'primary' ? 'ntp-primary' : 'ntp-backup';
             this.lastSyncTime = Date.now();
 
@@ -132,9 +141,9 @@ class NTPSync {
 
         for (const server of this.FALLBACK_SERVERS) {
             try {
-                const serverTime = await this.fetchTimeFromFallback(server);
-                const localTime = new Date();
-                this.timeOffset = serverTime.getTime() - localTime.getTime();
+                const result = await this.fetchTimeFromFallback(server);
+                // Korekcja half-RTT
+                this.timeOffset = result.time.getTime() - result.t4 + result.rtt / 2;
                 this.timeSourceUsed = 'fallback';
                 this.ntpServerUsed = server.name;
                 this.lastSyncTime = Date.now();

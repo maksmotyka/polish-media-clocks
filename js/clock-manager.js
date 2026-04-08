@@ -4,12 +4,14 @@
 
 class ClockManager {
     constructor() {
-        this.VERSION = '2.1.0';
+        this.VERSION = null;
+        this.aboutContent = null;
         this.ntpSync = null;
         this.currentClock = null;
         this.currentSkin = 'classic';
         this.audioCtx = null;
         this.lastPipSecond = -1;
+        this.audioPrimed = false;
 
         this.skins = {
             classic: {
@@ -61,6 +63,9 @@ class ClockManager {
         // Inicjalizacja AudioContext
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         this.audioCtx = new AudioContext();
+
+        // Załaduj treść okna "O projekcie" i ustal wersję aplikacji
+        await this.loadAboutContent();
 
         // Pobranie zapisanej skórki z localStorage
         const savedSkin = localStorage.getItem('clock-skin');
@@ -622,6 +627,17 @@ class ClockManager {
         this.restoreTVP1993BackgroundSettings();
     }
 
+    async loadAboutContent() {
+        if (window.ABOUT_CONTENT) {
+            this.aboutContent = window.ABOUT_CONTENT;
+            this.VERSION = this.aboutContent.version;
+        } else {
+            console.warn('Brak danych about-content.js');
+            this.VERSION = '?';
+            this.aboutContent = null;
+        }
+    }
+
     checkVersion() {
         const lastSeenVersion = localStorage.getItem('last-seen-version');
 
@@ -742,6 +758,32 @@ class ClockManager {
         }
     }
 
+    primeAudio() {
+        // "Uzbrój" kontekst audio poprzez zagranie cichego tonu poniżej progu słyszalności
+        // Używamy bardzo niskiej częstotliwości (5 Hz) która jest poza zakresem słuchu człowieka (20-20000 Hz)
+        // To pozwala na wyższy gain bez ryzyka że użytkownik cokolwiek usłyszy
+        if (this.audioPrimed || !this.audioCtx) return;
+
+        try {
+            const oscillator = this.audioCtx.createOscillator();
+            const gainNode = this.audioCtx.createGain();
+
+            oscillator.type = 'sine';
+            // 5 Hz - poniżej progu słyszalności człowieka (20 Hz)
+            oscillator.frequency.setValueAtTime(5, this.audioCtx.currentTime);
+            // Wyższy gain - nie ma ryzyka słyszalności przy tak niskiej częstotliwości
+            gainNode.gain.setValueAtTime(0.1, this.audioCtx.currentTime);
+
+            oscillator.connect(gainNode).connect(this.audioCtx.destination);
+            oscillator.start(this.audioCtx.currentTime);
+            oscillator.stop(this.audioCtx.currentTime + 0.05); // 50ms dla pewności
+
+            this.audioPrimed = true;
+        } catch (err) {
+            console.warn('Nie udało się uzbroić kanału audio:', err);
+        }
+    }
+
     playPip(duration = 0.1, timeOffset = 0) {
         const pipsCheckbox = document.getElementById('enable-pips');
         if (!pipsCheckbox || !pipsCheckbox.checked) return;
@@ -760,7 +802,11 @@ class ClockManager {
 
     checkForPips() {
         const pipsCheckbox = document.getElementById('enable-pips');
-        if (!pipsCheckbox || !pipsCheckbox.checked) return;
+        if (!pipsCheckbox || !pipsCheckbox.checked) {
+            // Jeśli pipy są wyłączone, zresetuj flagę uzbrojenia
+            this.audioPrimed = false;
+            return;
+        }
 
         let now = this.ntpSync.getSyncedTime();
 
@@ -772,6 +818,19 @@ class ClockManager {
         const minutes = now.getMinutes();
         const millis = now.getMilliseconds();
 
+        // Uzbrój audio sekundę przed pierwszym pipem (55s, 25s, 54s w trybie testowym)
+        if (!this.audioPrimed) {
+            const shouldPrime =
+                (minutes == 59 && seconds == 54) ||
+                (minutes == 29 && seconds == 54) ||
+                (this.testEnabled && minutes == 29 && seconds == 14) ||
+                (this.testEnabled && minutes == 59 && seconds == 14);
+
+            if (shouldPrime) {
+                this.primeAudio();
+            }
+        }
+
         if (seconds === this.lastPipSecond) return;
 
         if (minutes == 59 && seconds >= 55 && seconds <= 59 && millis < 150) {
@@ -780,12 +839,16 @@ class ClockManager {
         } else if (minutes == 0 && seconds === 0 && millis < 150) {
             this.playPip(0.3);
             this.lastPipSecond = seconds;
+            // Zresetuj flagę uzbrojenia po pełnej godzinie
+            this.audioPrimed = false;
         } else if (minutes == 29 && seconds >= 55 && seconds <= 59 && millis < 150) {
             this.playPip(0.1);
             this.lastPipSecond = seconds;
         } else if (minutes == 30 && seconds === 0 && millis < 150) {
             this.playPip(0.3);
             this.lastPipSecond = seconds;
+            // Zresetuj flagę uzbrojenia po pół godzinie
+            this.audioPrimed = false;
         }
 
         if (this.testEnabled) {
@@ -842,6 +905,29 @@ class ClockManager {
             font-family: system-ui, -apple-system, sans-serif;
         `;
 
+        const c = this.aboutContent;
+
+        const h3 = (text) => `<h3 style="font-size: 18px; margin-top: 20px; border-bottom: 2px solid rgba(255,255,255,0.3); padding-bottom: 5px;">${text}</h3>`;
+        const li = (items) => `<ul style="line-height: 1.8;">${items.map(i => `<li>${i}</li>`).join('')}</ul>`;
+
+        const changelogSection = c ? (() => {
+            const entry = c.changelog.find(e => e.version === this.VERSION);
+            if (!entry) return '';
+            return h3(`Co nowego w wersji ${entry.version}`) + li(entry.items);
+        })() : '';
+
+        const skinsSection = c ? li(c.skins.map(s =>
+            s.authorUrl
+                ? `<strong>${s.name}</strong> – ${s.description} – zaprojektowany przez użytkownika <a href="${s.authorUrl}" target="_blank" style="color: white; text-decoration: underline;"><code>${s.authorName}</code></a>`
+                : `<strong>${s.name}</strong> – ${s.description}`
+        )) : '';
+
+        const featuresSection = c ? li(c.features.map(f =>
+            f.replace(/\?(\S+=\S+)/g, '<code>?$1</code>')
+        )) : '';
+
+        const legalSection = c ? c.legal.map(p => `<p style="line-height: 1.6; font-size: 14px;">${p}</p>`).join('') : '';
+
         modal.innerHTML = `
             <h2 style="margin-top: 0; text-align: center; font-size: 24px; display: flex; align-items: center; justify-content: center; gap: 10px;">
                 <img src="assets/favicon.ico" alt="Clock icon" style="width: 32px; height: 32px;">
@@ -852,66 +938,21 @@ class ClockManager {
                 <strong>Wersja:</strong> ${this.VERSION}
             </div>
 
-            <h3 style="font-size: 18px; margin-top: 20px; border-bottom: 2px solid rgba(255,255,255,0.3); padding-bottom: 5px;">
-                O projekcie
-            </h3>
-            <p style="line-height: 1.6;">
-                Aplikacja zegarowa synchronizowana z serwerami NTP Głównego Urzędu Miar (GUM).
-                Zawiera kolekcję stylów zegarów inspirowanych systemami stosowanymi w historii
-                polskiej telewizji i radia.
-            </p>
+            ${changelogSection}
 
-            <h3 style="font-size: 18px; margin-top: 20px; border-bottom: 2px solid rgba(255,255,255,0.3); padding-bottom: 5px;">
-                Co nowego w wersji 2.1.0
-            </h3>
-            <ul style="line-height: 1.8;">
-                <li>Dodano kontrolki koloru tła dla zegarów: Polskiego Radia, Teleexpressu oraz TVP 1993-2012</li>
-                <li>Zmieniono kontrolkę logo TVP na bardziej intuicyjną</li>
-                <li>Naprawiono błąd, który nie pokazywał wskaźnika synchronizacji czasu. Sam wskaźnik od teraz również pulsuje w trakcie synchronizacji</li>
-                <li>Zegar Teleexpressu wyświetla liczbę sekund (możliwą do wyłączenia w Opcjach)</li>
-                <li>Dodano system powiadomień o nowych wersjach</li>
-            </ul>
+            ${h3('O projekcie')}
+            <p style="line-height: 1.6;">${c ? c.about.description : ''}</p>
 
-            <h3 style="font-size: 18px; margin-top: 20px; border-bottom: 2px solid rgba(255,255,255,0.3); padding-bottom: 5px;">
-                Dostępne style
-            </h3>
-            <ul style="line-height: 1.8;">
-                <li><strong>Polskie Radio (Favag + Cyfrowy)</strong> - Zegar analogowy i cyfrowy Polskiego Radia</li>
-                <li><strong>Teleexpress (Kropkowy)</strong> - Kropkowy zegar z kultowego programu TVP - zaprojektowany przez użytkownika <a href="https://github.com/qdnl/qdnl.github.io/tree/main/tex" target="_blank" style="color: white; text-decoration: underline;"><code>qdnl</code></a></li>
-                <li><strong>TVP 1993-2012</strong> - Klasyczny zegar TVP</li>
-                <li><strong>TVP 2012-dziś</strong> - Współczesny zegar TVP</li>
-                <li><strong>TVP Kraków (90s)</strong> - Regionalny zegar TVP Kraków</li>
-            </ul>
+            ${h3('Dostępne style')}
+            ${skinsSection}
 
-            <h3 style="font-size: 18px; margin-top: 20px; border-bottom: 2px solid rgba(255,255,255,0.3); padding-bottom: 5px;">
-                Funkcje
-            </h3>
-            <ul style="line-height: 1.8;">
-                <li>Synchronizacja czasu NTP (dokładność &lt; 1s)</li>
-                <li>Sygnał GUM - foniczne oznajmienie pełnej godziny (6 pików)</li>
-                <li>Parametr <code>?antena=1</code> - kompensacja opóźnienia FM (~700ms)</li>
-                <li>Parametr <code>?gum-test=1</code> - 30 pików testowych</li>
-            </ul>
+            ${h3('Funkcje')}
+            ${featuresSection}
 
-            <h3 style="font-size: 18px; margin-top: 20px; border-bottom: 2px solid rgba(255,255,255,0.3); padding-bottom: 5px;">
-                Prawa autorskie i licencja
-            </h3>
-            <p style="line-height: 1.6; font-size: 14px;">
-                Projekt stanowi niekomercyjną implementację inspirowaną oryginalnymi systemami
-                zegarowymi stosowanymi w Polskim Radiu i Telewizji Polskiej. Style zegarów zostały
-                odtworzone na podstawie publicznie dostępnych materiałów archiwalnych.
-            </p>
-            <p style="line-height: 1.6; font-size: 14px;">
-                Projekt nie jest oficjalnie powiązany z Polskim Radiem, TVP ani innymi podmiotami.
-                Wszelkie znaki towarowe i prawa autorskie należą do ich prawowitych właścicieli.
-            </p>
-            <p style="line-height: 1.6; font-size: 14px;">
-                Kod źródłowy projektu udostępniony jest wyłącznie w celach edukacyjnych i hobbystycznych.
-            </p>
+            ${h3('Prawa autorskie i licencja')}
+            ${legalSection}
 
-            <p style="line-height: 1.6; font-size: 14px;" align="center">
-                © Maksymilian Motyka 2025
-            </p>
+            <p style="line-height: 1.6; font-size: 14px; text-align: center;">${c ? c.about.copyright : ''}</p>
 
             <div style="text-align: center; margin-top: 25px;">
                 <button id="close-about" style="

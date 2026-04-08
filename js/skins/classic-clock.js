@@ -47,17 +47,17 @@ class ClassicClock {
         this.analogClock = this.container.querySelector('#analog-clock-container');
     }
 
-    easeOutQuad(t) {
-        return t * (2 - t);
+    easeInExpo(t) {
+        return t === 0 ? 0 : Math.pow(2, 10 * (t - 1));
     }
 
     updateAnalogClock(now) {
         const seconds = now.getSeconds();
         const milliSeconds = now.getMilliseconds() / 1000;
 
-        const movementDuration = 0.15;
+        const movementDuration = 0.20;
         const animationProgress = Math.min(milliSeconds / movementDuration, 1);
-        const smoothMovement = this.easeOutQuad(animationProgress);
+        const smoothMovement = this.easeInExpo(animationProgress);
         let rotation = ((360 / 60) * seconds + smoothMovement * 6 - 6 + 360) % 360;
         this.secondHand.style[this.TRANSFORM_NAME] = `rotate(${rotation}deg)`;
 
