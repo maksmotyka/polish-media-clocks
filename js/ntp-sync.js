@@ -18,6 +18,7 @@ class NTPSync {
         this.timeSourceUsed = 'system';
         this.ntpServerUsed = 'Nieznany';
         this.lastSyncTime = 0;
+        this.connectionFailed = false;
         this.syncCount = 0;
         this.resyncTimer = null;
 
@@ -121,6 +122,7 @@ class NTPSync {
             this.timeOffset = result.time.getTime() - result.t4 + result.rtt / 2;
             this.timeSourceUsed = result.type === 'primary' ? 'ntp-primary' : 'ntp-backup';
             this.lastSyncTime = Date.now();
+            this.connectionFailed = false;
 
             if (isResync) {
                 const drift = Math.abs(this.timeOffset - oldOffset);
@@ -147,6 +149,7 @@ class NTPSync {
                 this.timeSourceUsed = 'fallback';
                 this.ntpServerUsed = server.name;
                 this.lastSyncTime = Date.now();
+                this.connectionFailed = false;
 
                 console.log(`📊 Offset czasu: ${this.timeOffset}ms`);
                 console.log(`⚠ Źródło: Fallback (${server.name})`);
@@ -160,8 +163,18 @@ class NTPSync {
             }
         }
 
+        if (isResync && this.timeSourceUsed !== 'system') {
+            console.log('🟡 Brak połączenia — zachowuję poprzedni wzorzec czasu');
+            console.log(`   Ostatni offset: ${this.timeOffset}ms (${this.ntpServerUsed})`);
+            console.log('='.repeat(40));
+            this.connectionFailed = true;
+            this.notifySyncComplete(isResync);
+            this.scheduleNextResync();
+            return;
+        }
+
         console.log('🔴 UWAGA: Używam czasu systemowego');
-        console.log('   Brak połączenia z GUM i serwerami zapasowymi');
+        console.log('   Brak połączenia z GUM i serwerami zapasowymi przy starcie');
         console.log('='.repeat(40));
         this.timeOffset = 0;
         this.timeSourceUsed = 'system';
@@ -192,7 +205,8 @@ class NTPSync {
             timeSourceUsed: this.timeSourceUsed,
             ntpServerUsed: this.ntpServerUsed,
             timeOffset: this.timeOffset,
-            lastSyncTime: this.lastSyncTime
+            lastSyncTime: this.lastSyncTime,
+            connectionFailed: this.connectionFailed
         };
     }
 

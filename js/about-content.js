@@ -3,7 +3,7 @@
 // =============================================================================
 
 window.ABOUT_CONTENT = {
-  version: '2.2.0',
+  version: '2.3.0',
   about: {
     description: 'Aplikacja zegarowa synchronizowana z serwerami NTP Głównego Urzędu Miar (GUM). Zawiera kolekcję stylów zegarów inspirowanych systemami stosowanymi w historii polskiej telewizji i radia.',
     copyright: '© Maksymilian Motyka 2026'
@@ -44,6 +44,12 @@ window.ABOUT_CONTENT = {
     'Kod źródłowy projektu udostępniony jest wyłącznie w celach edukacyjnych i hobbystycznych.'
   ],
   changelog: [
+    {
+      version: '2.3.0',
+      items: [
+        'W przypadku utraty połączenia z internetem, aplikacja zachowa ostatni pobrany wzorzec czasu, zamiast przeskakiwać na czas systemowy w systemie uytkownika',
+      ]
+    },
     {
       version: '2.2.0',
       items: [

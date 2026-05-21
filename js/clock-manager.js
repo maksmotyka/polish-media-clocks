@@ -730,6 +730,13 @@ class ClockManager {
             ? ` | Offset: ${status.timeOffset > 0 ? '+' : ''}${status.timeOffset}ms`
             : '';
 
+        if (status.connectionFailed) {
+            statusDiv.innerHTML = `⚠️ <strong>Utracono połączenie z serwerem</strong><br>
+                                   <small>Zachowano wzorzec: ${status.ntpServerUsed}${offsetText}</small>`;
+            statusDiv.classList.remove('hidden');
+            return;
+        }
+
         statusDiv.innerHTML = `${icon} <strong>${label}</strong><br>
                                <small>${status.ntpServerUsed}${offsetText}</small>`;
 
