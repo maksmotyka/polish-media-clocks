@@ -9,6 +9,7 @@
     width: 100%;
     height: 100%;
     background-image: url(../../clock-assets/tvp-1993/background.png);
+    background-image: image-set(url(../../clock-assets/tvp-1993/background.webp) type("image/webp"), url(../../clock-assets/tvp-1993/background.png) type("image/png"));
     background-size: contain;
     background-position: 50% 50%;
     background-repeat: no-repeat;
@@ -40,6 +41,7 @@
 
 .tvp-clock .second-hand-inner {
     background-image: url(../../clock-assets/tvp-1993/hand-second.png);
+    background-image: image-set(url(../../clock-assets/tvp-1993/hand-second.webp) type("image/webp"), url(../../clock-assets/tvp-1993/hand-second.png) type("image/png"));
 }
 
 .tvp-clock .minute-hand {
@@ -48,6 +50,7 @@
 
 .tvp-clock .minute-hand-inner {
     background-image: url(../../clock-assets/tvp-1993/hand-minute.png);
+    background-image: image-set(url(../../clock-assets/tvp-1993/hand-minute.webp) type("image/webp"), url(../../clock-assets/tvp-1993/hand-minute.png) type("image/png"));
 }
 
 .tvp-clock .hour-hand {
@@ -56,4 +59,5 @@
 
 .tvp-clock .hour-hand-inner {
     background-image: url(../../clock-assets/tvp-1993/hand-hour.png);
+    background-image: image-set(url(../../clock-assets/tvp-1993/hand-hour.webp) type("image/webp"), url(../../clock-assets/tvp-1993/hand-hour.png) type("image/png"));
 }

@@ -55,8 +55,14 @@ class ClockManager {
         };
 
         this.urlParams = new URLSearchParams(window.location.search);
-        this.antenaEnabled = this.urlParams.get('antena') === '1';
-        this.testEnabled = this.urlParams.get('gum-test') === '1';
+        this.kioskMode = this.urlParams.get('kiosk') === '1';
+
+        // Ustawienia GUM (zapisane w localStorage; parametry URL wymuszają włączenie opcji)
+        this.pipsEnabled = localStorage.getItem('gum-enabled') === 'true';
+        this.antenaEnabled = this.urlParams.get('antena') === '1' || localStorage.getItem('gum-antena') === 'true';
+        this.testEnabled = this.urlParams.get('gum-test') === '1' || localStorage.getItem('gum-test') === 'true';
+        const savedInterval = parseInt(localStorage.getItem('gum-interval'), 10);
+        this.pipsInterval = [1, 30, 60].includes(savedInterval) ? savedInterval : 30;
     }
 
     async init() {
@@ -75,6 +81,11 @@ class ClockManager {
 
         // Ustaw klasę body dla obecnej skórki
         document.body.classList.add(`skin-${this.currentSkin}`);
+
+        // Tryb kiosk (?kiosk=1) - ukrywa przycisk "Opcje", status i powiadomienie o wersji
+        if (this.kioskMode) {
+            document.body.classList.add('kiosk');
+        }
 
         // Załaduj CSS dla obecnej skórki
         this.loadSkinCSS(this.currentSkin);
@@ -120,6 +131,25 @@ class ClockManager {
         window.addEventListener('resize', () => {
             this.updateLayout();
         });
+
+        // Skróty klawiszowe: "O" - panel opcji, ESC - zamknięcie panelu
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey || e.metaKey || e.altKey || e.repeat) return;
+            if (document.getElementById('about-overlay')) return;
+
+            if (e.code === 'KeyO') {
+                this.toggleControls();
+            } else if (e.key === 'Escape') {
+                document.getElementById('controls')?.classList.add('hidden');
+            }
+        });
+    }
+
+    toggleControls() {
+        const controls = document.getElementById('controls');
+        if (controls) {
+            controls.classList.toggle('hidden');
+        }
     }
 
     loadSkinCSS(skinName) {
@@ -191,10 +221,7 @@ class ClockManager {
 
             // Event listener dla przycisku
             toggleButton.addEventListener('click', () => {
-                const controls = document.getElementById('controls');
-                if (controls) {
-                    controls.classList.toggle('hidden');
-                }
+                this.toggleControls();
             });
         }
 
@@ -245,7 +272,22 @@ class ClockManager {
                 <button id="teleexpress-reset-bg" style="margin-top: 10px; padding: 8px; cursor: pointer; width: 100%; display: none;">Resetuj ustawienia tła</button>
             </div>
             <hr style="border-color: rgba(255,255,255,0.3); margin: 10px 0;">
-            <label><input type="checkbox" id="enable-pips"> GUM</label>
+            <label><input type="checkbox" id="enable-pips" ${this.pipsEnabled ? 'checked' : ''}> GUM</label>
+            <div id="gum-options" style="display: ${this.pipsEnabled ? 'block' : 'none'}; margin: 0 0 5px 22px;">
+                <details id="gum-advanced">
+                    <summary style="cursor: pointer; font-family: Arial, Helvetica, sans-serif; font-size: 13px; opacity: 0.8;">Zaawansowane</summary>
+                    <label>
+                        <span>Częstotliwość:</span>
+                        <select id="gum-interval">
+                            <option value="60" ${this.pipsInterval === 60 ? 'selected' : ''}>Co godzinę</option>
+                            <option value="30" ${this.pipsInterval === 30 ? 'selected' : ''}>Co pół godziny</option>
+                            <option value="1" ${this.pipsInterval === 1 ? 'selected' : ''}>Co minutę</option>
+                        </select>
+                    </label>
+                    <label title="Przesuwa piki o ~700 ms do przodu (jak w Polskim Radiu), by słuchacz FM usłyszał pełną godzinę punktualnie"><input type="checkbox" id="gum-antena" ${this.antenaEnabled ? 'checked' : ''}> Kompensacja opóźnienia FM</label>
+                    <label title="31 pików kontrolnych od xx:59:15 do xx:59:45 (oraz od xx:29:15 do xx:29:45, jeśli GUM nie jest ustawiony co godzinę)"><input type="checkbox" id="gum-test" ${this.testEnabled ? 'checked' : ''}> Piki testowe</label>
+                </details>
+            </div>
             <label><input type="checkbox" id="show-status"> Pokaż status wzorca czasu</label>
             <hr style="border-color: rgba(255,255,255,0.3); margin: 10px 0;">
             <div style="display: flex; gap: 8px;">
@@ -367,6 +409,34 @@ class ClockManager {
             });
         }
 
+        const pipsCheckbox = document.getElementById('enable-pips');
+        const gumOptions = document.getElementById('gum-options');
+        pipsCheckbox.addEventListener('change', () => {
+            this.pipsEnabled = pipsCheckbox.checked;
+            gumOptions.style.display = this.pipsEnabled ? 'block' : 'none';
+            localStorage.setItem('gum-enabled', this.pipsEnabled);
+        });
+
+        // Rozwiń sekcję, jeśli któraś z opcji zaawansowanych odbiega od domyślnej
+        if (this.antenaEnabled || this.testEnabled || this.pipsInterval !== 30) {
+            document.getElementById('gum-advanced').open = true;
+        }
+
+        document.getElementById('gum-interval').addEventListener('change', (e) => {
+            this.pipsInterval = parseInt(e.target.value, 10);
+            localStorage.setItem('gum-interval', this.pipsInterval);
+        });
+
+        document.getElementById('gum-antena').addEventListener('change', (e) => {
+            this.antenaEnabled = e.target.checked;
+            localStorage.setItem('gum-antena', this.antenaEnabled);
+        });
+
+        document.getElementById('gum-test').addEventListener('change', (e) => {
+            this.testEnabled = e.target.checked;
+            localStorage.setItem('gum-test', this.testEnabled);
+        });
+
         document.getElementById('show-status').addEventListener('change', () => {
             this.toggleStatusVisibility();
         });
@@ -479,7 +549,8 @@ class ClockManager {
 
         // Zastosuj ustawienia
         if (enableBackground) {
-            document.body.style.backgroundImage = 'url(clock-assets/classic/background.jpg)';
+            // Tło (WebP z fallbackiem JPG) definiuje reguła body.skin-classic w common.css
+            document.body.style.backgroundImage = '';
             document.body.style.backgroundColor = '';
         } else {
             document.body.style.backgroundImage = 'none';
@@ -754,6 +825,9 @@ class ClockManager {
         const showStatusCheckbox = document.getElementById('show-status');
 
         if (statusDiv && showStatusCheckbox) {
+            // W trybie kiosk status jest widoczny tylko po jawnym zaznaczeniu opcji
+            statusDiv.classList.toggle('pinned', showStatusCheckbox.checked);
+
             if (showStatusCheckbox.checked) {
                 statusDiv.classList.remove('hidden');
             } else {
@@ -792,8 +866,7 @@ class ClockManager {
     }
 
     playPip(duration = 0.1, timeOffset = 0) {
-        const pipsCheckbox = document.getElementById('enable-pips');
-        if (!pipsCheckbox || !pipsCheckbox.checked) return;
+        if (!this.pipsEnabled) return;
 
         const oscillator = this.audioCtx.createOscillator();
         const gainNode = this.audioCtx.createGain();
@@ -808,8 +881,7 @@ class ClockManager {
     }
 
     checkForPips() {
-        const pipsCheckbox = document.getElementById('enable-pips');
-        if (!pipsCheckbox || !pipsCheckbox.checked) {
+        if (!this.pipsEnabled) {
             // Jeśli pipy są wyłączone, zresetuj flagę uzbrojenia
             this.audioPrimed = false;
             return;
@@ -825,47 +897,38 @@ class ClockManager {
         const minutes = now.getMinutes();
         const millis = now.getMilliseconds();
 
-        // Uzbrój audio sekundę przed pierwszym pipem (55s, 25s, 54s w trybie testowym)
+        // Czy pełna minuta (bieżąca / następna) jest oznajmiana w wybranym interwale (60, 30 lub 1 min)
+        const isAnnounced = (minute) => minute % this.pipsInterval === 0;
+        const nextMinute = (minutes + 1) % 60;
+        const beforeAnnounced = isAnnounced(nextMinute);
+
+        // Piki testowe tylko przed pełną godziną / połową godziny (także w trybie co minutę)
+        const testMinute = this.testEnabled && nextMinute % Math.max(this.pipsInterval, 30) === 0;
+
+        // Uzbrój audio sekundę przed pierwszym pipem (54s, 14s w trybie testowym)
         if (!this.audioPrimed) {
             const shouldPrime =
-                (minutes == 59 && seconds == 54) ||
-                (minutes == 29 && seconds == 54) ||
-                (this.testEnabled && minutes == 29 && seconds == 14) ||
-                (this.testEnabled && minutes == 59 && seconds == 14);
+                (beforeAnnounced && seconds == 54) ||
+                (testMinute && seconds == 14);
 
             if (shouldPrime) {
                 this.primeAudio();
             }
         }
 
-        if (seconds === this.lastPipSecond) return;
+        if (seconds === this.lastPipSecond || millis >= 150) return;
 
-        if (minutes == 59 && seconds >= 55 && seconds <= 59 && millis < 150) {
+        if (beforeAnnounced && seconds >= 55 && seconds <= 59) {
             this.playPip(0.1);
             this.lastPipSecond = seconds;
-        } else if (minutes == 0 && seconds === 0 && millis < 150) {
+        } else if (isAnnounced(minutes) && seconds === 0) {
             this.playPip(0.3);
             this.lastPipSecond = seconds;
-            // Zresetuj flagę uzbrojenia po pełnej godzinie
+            // Zresetuj flagę uzbrojenia po oznajmionej pełnej minucie
             this.audioPrimed = false;
-        } else if (minutes == 29 && seconds >= 55 && seconds <= 59 && millis < 150) {
+        } else if (testMinute && seconds >= 15 && seconds <= 45) {
             this.playPip(0.1);
             this.lastPipSecond = seconds;
-        } else if (minutes == 30 && seconds === 0 && millis < 150) {
-            this.playPip(0.3);
-            this.lastPipSecond = seconds;
-            // Zresetuj flagę uzbrojenia po pół godzinie
-            this.audioPrimed = false;
-        }
-
-        if (this.testEnabled) {
-            if (minutes == 29 && seconds >= 15 && seconds <= 45 && millis < 150) {
-                this.playPip(0.1);
-                this.lastPipSecond = seconds;
-            } else if (minutes == 59 && seconds >= 15 && seconds <= 45 && millis < 150) {
-                this.playPip(0.1);
-                this.lastPipSecond = seconds;
-            }
         }
     }
 

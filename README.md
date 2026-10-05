@@ -61,6 +61,11 @@ Aplikacja jest skonfigurowana jako PWA i może być zainstalowana na urządzeniu
 - W przeglądarkach Chrome/Edge: kliknij ikonę instalacji w pasku adresu
 - Działa w trybie standalone (pełny ekran bez paska przeglądarki)
 
+### Działanie offline
+Aplikacja korzysta z Service Workera (`sw.js`), który przy pierwszej wizycie zapisuje w pamięci przeglądarki całą logikę klienta oraz grafiki wszystkich stylów zegarów (ok. 4 MB). Dzięki temu po utracie połączenia zegar nadal się uruchamia i można zmieniać jego styl. Synchronizacja z GUM wymaga sieci - offline aplikacja korzysta z czasu systemowego (🔴), a po utracie połączenia w trakcie pracy zachowuje ostatni uzyskany wzorzec (⚠️).
+
+Wersja pamięci podręcznej pochodzi z pola `version` w `js/about-content.js`. Po jego zmianie przeglądarka automatycznie pobiera nowe pliki i usuwa poprzednią wersję - przy wydaniu nie trzeba modyfikować `sw.js`. Plik `sw.js` wymaga aktualizacji tylko przy dodaniu nowych plików (np. nowej skórki) do list `APP_FILES` / `ASSET_FILES`.
+
 ## Dostępne style zegarów
 
 ### 1. Polskie Radio (Favag + Cyfrowy)
@@ -105,6 +110,7 @@ Projekt jest podzielony na niezależne moduły:
 polish-media-clocks/
 ├── index.html                         # Główny plik HTML
 ├── manifest.json                      # Manifest PWA
+├── sw.js                              # Service Worker (działanie offline)
 ├── css/
 │   ├── common.css                     # Wspólne style (tła, kontrolki)
 │   └── skins/

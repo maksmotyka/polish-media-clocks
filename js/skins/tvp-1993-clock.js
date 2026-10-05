@@ -78,11 +78,16 @@ class TVP1993Clock {
 
     updateLayout(showAnalog, showDigital, showLogo) {
         // Zmień tło w zależności od stanu checkboxa "Logo"
-        if (showLogo) {
-            this.clockEl.style.backgroundImage = 'url(./clock-assets/tvp-1993/background.png)';
-        } else {
-            this.clockEl.style.backgroundImage = 'url(./clock-assets/tvp-1993/background-nologo.png)';
-        }
+        const name = showLogo ? 'background' : 'background-nologo';
+        this.setBackground(`./clock-assets/tvp-1993/${name}`);
+    }
+
+    setBackground(basePath) {
+        // Najpierw PNG; image-set z WebP nadpisze go tylko w przeglądarkach,
+        // które je obsługują (nieprawidłowa wartość jest ignorowana)
+        this.clockEl.style.backgroundImage = `url(${basePath}.png)`;
+        this.clockEl.style.backgroundImage =
+            `image-set(url(${basePath}.webp) type("image/webp"), url(${basePath}.png) type("image/png"))`;
     }
 
     destroy() {

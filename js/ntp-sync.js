@@ -57,11 +57,13 @@ class NTPSync {
 
             if (!data.success) throw new Error(data.error || 'Uwaga! Serwer zwrócił błąd.');
 
-            const serverTime = new Date(data.timestamp);
+            // unixTime zamiast timestamp - timestamp nie zawiera strefy czasowej,
+            // więc przeglądarka spoza Polski zinterpretowałaby go błędnie
+            const serverTime = new Date(data.unixTime);
             const rtt = t4 - t1;
             this.ntpServerUsed = data.source;
 
-            console.log(`✓ Połączono z NTP GUM: ${data.source}`);
+            console.log(`✓ Połączono z backendem czasu: ${data.source}`);
             console.log(`  Czas NTP: ${serverTime.toISOString()}`);
             console.log(`  Typ serwera: ${data.serverType}`);
             console.log(`  RTT HTTP: ${rtt}ms (korekta: +${(rtt / 2).toFixed(1)}ms)`);
@@ -120,7 +122,9 @@ class NTPSync {
             const result = await this.fetchTimeFromNTP();
             // Korekcja half-RTT: offset = serverTime - (t1 + RTT/2) = serverTime - t4 + RTT/2
             this.timeOffset = result.time.getTime() - result.t4 + result.rtt / 2;
-            this.timeSourceUsed = result.type === 'primary' ? 'ntp-primary' : 'ntp-backup';
+            const sourceTypes = { 'primary': 'ntp-primary', 'backup': 'ntp-backup' };
+            // Fallback HTTP backendu (worldtimeapi / nagłówek Date) nie pochodzi z GUM
+            this.timeSourceUsed = sourceTypes[result.type] || 'fallback';
             this.lastSyncTime = Date.now();
             this.connectionFailed = false;
 
@@ -131,7 +135,9 @@ class NTPSync {
             }
 
             console.log(`📊 Offset: ${this.timeOffset}ms`);
-            console.log(`✅ Źródło: GUM (${this.ntpServerUsed})`);
+            console.log(this.timeSourceUsed === 'fallback'
+                ? `⚠ Źródło: Fallback backendu (${this.ntpServerUsed})`
+                : `✅ Źródło: GUM (${this.ntpServerUsed})`);
             console.log('='.repeat(40));
 
             this.notifySyncComplete(isResync);
