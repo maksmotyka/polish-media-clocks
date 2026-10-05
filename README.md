@@ -5,13 +5,23 @@ Aplikacja zegarowa synchronizowana z serwerami NTP Głównego Urzędu Miar (GUM)
 ## Funkcje aplikacji
 
 ### Synchronizacja czasu NTP
-Aplikacja została wyposażona we własny backend API, który komunikuje się z serwerem NTP Głównego Urzędu Miar i Wag (tzw. `Tempus`). W momencie uruchomienia aplikacji odpytuje ona API o dostrojenie się do sygnału czasu przekazywanego przez GUM. API próbuje uzyskać informację najpierw od serwera głównego (`tempus1`). Jeśli to się nie uda, próbuje uzyskać informacje od serwera zapasowego (`tempus2`).
+Przeglądarka nie może bezpośrednio odpytywać serwerów NTP (protokół UDP), dlatego aplikacja korzysta z własnego backendu API, który komunikuje się z serwerami NTP Głównego Urzędu Miar (tzw. `Tempus`) i udostępnia wzorzec czasu przez HTTPS. Domyślna instancja działa pod adresem `https://timeserv.maksplus.xyz`. Kod źródłowy, opis API oraz instrukcja uruchomienia własnej instancji znajdują się w katalogu [`backend/`](backend/README.md) - adres backendu ustawia się w stałej `BACKEND_URL` w pliku `js/ntp-sync.js`.
 
-W przypadku niemożliwości połączenia się aplikacji z API lub brakiem informacji od serwerów GUM, aplikacja próbuje uzyskać informacje o wzorcu czasu z publicznie dostępnych usług API (`WorldTimeAPI`).
+W momencie uruchomienia aplikacja odpytuje backend, a ten próbuje kolejno źródeł czasu:
+1. `tempus1.gum.gov.pl` - główny serwer NTP GUM,
+2. `tempus2.gum.gov.pl` - zapasowy serwer NTP GUM,
+3. publiczne usługi HTTP (`WorldTimeAPI`, a w ostateczności nagłówek `Date:` z `cloudflare.com`) - gdy serwery GUM są niedostępne z poziomu backendu.
 
-Gdy wszystkie powyższe metody łączenia zawiodą, aplikacja pobiera czas z tego ustawionego w systemie użytkownika - w przypadku domyślnej konfiguracji systemów operacyjnych będzie to oznaczało dokładność +/- 1 sekundy (biorąc pod uwagę naturalny odchył zegara systemowego i niestałe dostrajanie się do wzorca czasu).
+Jeśli sam backend jest nieosiągalny, aplikacja próbuje pobrać czas bezpośrednio z `WorldTimeAPI`. Gdy wszystkie powyższe metody zawiodą, aplikacja korzysta z czasu ustawionego w systemie użytkownika - w przypadku domyślnej konfiguracji systemów operacyjnych będzie to oznaczało dokładność +/- 1 sekundy (biorąc pod uwagę naturalny odchył zegara systemowego i niestałe dostrajanie się do wzorca czasu).
 
-Stan połączenia raportowany jest zarówno poprzez "dymek" widoczny w lewym górnym rogu strony, jak również poprzez konsolę w narzędziach deweloperskich przeglądarki.
+Po synchronizacji aplikacja okresowo ponawia ją w tle (co 15 minut, po powrocie do karty po co najmniej 5 minutach od ostatniej synchronizacji oraz po wykryciu skoku czasu systemowego, np. po wybudzeniu komputera).
+
+Stan połączenia raportowany jest zarówno poprzez "dymek" widoczny w lewym górnym rogu strony, jak również poprzez konsolę w narzędziach deweloperskich przeglądarki:
+- 🟢 **GUM (tempus1)** - czas z głównego serwera GUM
+- 🟡 **GUM (tempus2)** - czas z zapasowego serwera GUM
+- 🟠 **Serwer zapasowy** - czas z publicznej usługi HTTP (bez udziału GUM, mniejsza dokładność)
+- 🔴 **Czas systemowy** - brak połączenia z jakimkolwiek wzorcem
+- ⚠️ **Utracono połączenie z serwerem** - ponowna synchronizacja nie powiodła się, aplikacja zachowuje ostatni uzyskany wzorzec
 
 ### Sygnał foniczny czasu (tzw. "GUM")
 Sygnał GUM-u można włączyć poprzez przełącznik w panelu "Opcje". Po włączeniu funkcji, aplikacja będzie ogłaszać pełną godzinę poprzez wyemitowanie fonicznego sygnału czasu o wysokości `940 Hz` składającego się z 6 pików: 5 oznajmiających ostatnie 5 sekund mijającej godziny oraz ostatni, wydłużony sygnał, którego początek oznacza punktualnie nową pełną godzinę.
@@ -19,12 +29,24 @@ Sygnał GUM-u można włączyć poprzez przełącznik w panelu "Opcje". Po włą
 - `xx:59:55` - `xx:59:59` - Sygnał o długości 100ms
 - `xx+1:00:00` - Sygnał o długości 300ms
 
-Aplikacja emituje podobną sekwencję sygnału czasu również w momencie upłynięcia połowy godziny, tzn. w zakresie `xx:29:55` - `xx:30:00`.
+Częstotliwość sygnału wybiera się z listy w sekcji "Zaawansowane" pod przełącznikiem GUM:
+- **Co pół godziny** (domyślnie) - dodatkowo w zakresie `xx:29:55` - `xx:30:00`
+- **Co godzinę** - tylko o pełnej godzinie
+- **Co minutę** - dla wytrwałych: sekwencja przed każdą pełną minutą
 
-### Dostępne parametry adresowe
-`antena=1` - przesuwa dźwięk GUM-u o ok. 700ms - 1 sekundę do przodu / kompensacja opóźnienia FM - pełna godzina anonsowana jest dłuższym pikiem o godz `~xx:59:59.300`. Jest to mechanizm stosowany w Polskim Radiu - dzięki takiemu przesunięciu słuchacz odbierający rozgłośnię poprzez FM usłyszy pik o pełnej godzinie.
+Wszystkie ustawienia GUM-u (włączenie, częstotliwość i opcje zaawansowane) są zapamiętywane w przeglądarce. Ze względu na politykę autoodtwarzania przeglądarek dźwięk zacznie działać dopiero po pierwszym kliknięciu w stronę.
 
-`gum-test=1` - aktywacja pików testowych - Zegar po zaznaczeniu opcji GUM wydaje również 30 pików kontrolnych: od `xx:59:15` do `xx:59:45` oraz od `xx:29:15` do `xx:29:45`.
+### Opcje zaawansowane GUM-u
+Po zaznaczeniu opcji GUM pod przełącznikiem pojawia się zwijana sekcja "Zaawansowane" z wyborem częstotliwości oraz dwiema dodatkowymi opcjami. Każdą z tych dwóch opcji można też wymusić parametrem w adresie strony:
+
+**Kompensacja opóźnienia FM** (`antena=1`) - przesuwa dźwięk GUM-u o ok. 700ms - 1 sekundę do przodu / kompensacja opóźnienia FM - pełna godzina anonsowana jest dłuższym pikiem o godz `~xx:59:59.300`. Jest to mechanizm stosowany w Polskim Radiu - dzięki takiemu przesunięciu słuchacz odbierający rozgłośnię poprzez FM usłyszy pik o pełnej godzinie.
+
+**Piki testowe** (`gum-test=1`) - Zegar wydaje również 31 pików kontrolnych: od `xx:59:15` do `xx:59:45` oraz (przy trybie innym niż "co godzinę") od `xx:29:15` do `xx:29:45`.
+
+### Tryb kiosk i skróty klawiszowe
+`kiosk=1` - ukrywa elementy interfejsu: przycisk "Opcje", status wzorca czasu oraz powiadomienie o nowej wersji. Przydatne przy wyświetlaniu zegara na ekranie lub jako źródło w programie do realizacji wizji. Status wzorca czasu można mimo to przywrócić opcją "Pokaż status wzorca czasu".
+
+Panel opcji można w każdym trybie otworzyć i zamknąć klawiszem `O`, a zamknąć również klawiszem `Esc`.
 
 ### Panel "O projekcie"
 Aplikacja zawiera wbudowany panel informacyjny dostępny z menu "Opcje". Panel zawiera:
@@ -38,6 +60,11 @@ Aplikacja jest skonfigurowana jako PWA i może być zainstalowana na urządzeniu
 - Na urządzeniach mobilnych: użyj opcji "Dodaj do ekranu głównego"
 - W przeglądarkach Chrome/Edge: kliknij ikonę instalacji w pasku adresu
 - Działa w trybie standalone (pełny ekran bez paska przeglądarki)
+
+### Działanie offline
+Aplikacja korzysta z Service Workera (`sw.js`), który przy pierwszej wizycie zapisuje w pamięci przeglądarki całą logikę klienta oraz grafiki wszystkich stylów zegarów (ok. 4 MB). Dzięki temu po utracie połączenia zegar nadal się uruchamia i można zmieniać jego styl. Synchronizacja z GUM wymaga sieci - offline aplikacja korzysta z czasu systemowego (🔴), a po utracie połączenia w trakcie pracy zachowuje ostatni uzyskany wzorzec (⚠️).
+
+Wersja pamięci podręcznej pochodzi z pola `version` w `js/about-content.js`. Po jego zmianie przeglądarka automatycznie pobiera nowe pliki i usuwa poprzednią wersję - przy wydaniu nie trzeba modyfikować `sw.js`. Plik `sw.js` wymaga aktualizacji tylko przy dodaniu nowych plików (np. nowej skórki) do list `APP_FILES` / `ASSET_FILES`.
 
 ## Dostępne style zegarów
 
@@ -83,6 +110,7 @@ Projekt jest podzielony na niezależne moduły:
 polish-media-clocks/
 ├── index.html                         # Główny plik HTML
 ├── manifest.json                      # Manifest PWA
+├── sw.js                              # Service Worker (działanie offline)
 ├── css/
 │   ├── common.css                     # Wspólne style (tła, kontrolki)
 │   └── skins/
@@ -94,6 +122,7 @@ polish-media-clocks/
 ├── js/
 │   ├── ntp-sync.js                    # Moduł synchronizacji NTP
 │   ├── clock-manager.js               # Zarządzanie zegarami i UI
+│   ├── about-content.js               # Treść okna "O projekcie"
 │   └── skins/
 │       ├── classic-clock.js           # Logika zegara Polskiego Radia
 │       ├── teleexpress-clock.js       # Logika zegara Teleexpressu
@@ -105,7 +134,14 @@ polish-media-clocks/
 │   ├── tvp-1993/                      # TVP 1993-2012
 │   ├── tvp-2012/                      # TVP 2012-dziś
 │   └── tvp-krakow/                    # TVP Kraków
-└── fonts/                             # Czcionki (DigiClock)
+├── fonts/                             # Czcionki (DigiClock)
+└── backend/                           # Backend API - serwer czasu (Python/Flask)
+    ├── app.py                         # Aplikacja: NTP GUM + fallbacki HTTP
+    ├── requirements.txt               # Zależności Pythona
+    ├── install.sh                     # Instalacja na Ubuntu (systemd + Nginx)
+    ├── ntp-backend.service            # Usługa systemd
+    ├── nginx-timeserv.conf            # Konfiguracja reverse proxy
+    └── README.md                      # Dokumentacja API i instalacji
 ```
 
 ### Moduły
@@ -121,6 +157,11 @@ polish-media-clocks/
 - Dynamiczne ładowanie stylów CSS
 - Obsługa kontrolek i GUM
 - Wyświetlanie statusu synchronizacji
+
+**Backend API (backend/)**
+- Pobieranie czasu z serwerów NTP GUM (`tempus1`, `tempus2`)
+- Fallbacki HTTP, gdy NTP jest niedostępne
+- Endpointy `/api/time`, `/health` - szczegóły w [`backend/README.md`](backend/README.md)
 
 **Skórki zegarów (js/skins/)**
 - Każda skórka to osobna klasa

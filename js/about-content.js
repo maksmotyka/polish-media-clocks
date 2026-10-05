@@ -3,7 +3,7 @@
 // =============================================================================
 
 window.ABOUT_CONTENT = {
-  version: '2.3.0',
+  version: '2.4.0',
   about: {
     description: 'Aplikacja zegarowa synchronizowana z serwerami NTP Głównego Urzędu Miar (GUM). Zawiera kolekcję stylów zegarów inspirowanych systemami stosowanymi w historii polskiej telewizji i radia.',
     copyright: '© Maksymilian Motyka 2026'
@@ -34,9 +34,11 @@ window.ABOUT_CONTENT = {
   ],
   features: [
     'Synchronizacja czasu NTP (dokładność < 1s)',
-    'Sygnał GUM – foniczne oznajmienie pełnej godziny (6 pików)',
-    'Parametr ?antena=1 – kompensacja opóźnienia FM (~700ms)',
-    'Parametr ?gum-test=1 – 30 pików testowych'
+    'Sygnał GUM – foniczne oznajmienie pełnej godziny (6 pików), co godzinę, pół godziny lub minutę',
+    'GUM → Zaawansowane: kompensacja opóźnienia FM (~700ms, ?antena=1)',
+    'GUM → Zaawansowane: 31 pików testowych (?gum-test=1)',
+    'Parametr ?kiosk=1 – ukrycie elementów interfejsu',
+    'Klawisz O – otwarcie / zamknięcie panelu opcji'
   ],
   legal: [
     'Projekt stanowi niekomercyjną implementację inspirowaną oryginalnymi systemami zegarowymi stosowanymi w Polskim Radiu i Telewizji Polskiej. Style zegarów zostały odtworzone na podstawie publicznie dostępnych materiałów archiwalnych.',
@@ -44,6 +46,15 @@ window.ABOUT_CONTENT = {
     'Kod źródłowy projektu udostępniony jest wyłącznie w celach edukacyjnych i hobbystycznych.'
   ],
   changelog: [
+    {
+      version: '2.4.0',
+      items: [
+        'Przyspieszenie działania aplikacji: Grafiki i elementy interfejsu korzystają od teraz ze lżejszych plików WebP.Zachowano kompatybilność wsteczną ze starszymi przeglądarkami - te załadują stare pliki png/jpg.',
+        'Tryb offline: Wraz z załadowaniem aplikacji w nowej wersji Twoje urządzenie pobrało logikę i skórki do swojej pamięci - aplikację od teraz uruchomisz nawet bez dostępu do internetu!',
+        'Przebudowanie GUM-u: Po włączeniu pokazują się ustawienia zaawansowane - częstotliwość emisji sygnału oraz przyciski włączające kompensację FM oraz piki testowe. Przełączniki adresowe (antena) oraz (gum-test) wciąż działają. Uwaga! Przyciski w menu opcje mają "pamięć" i zapamiętują w cache swoje ustawienia.',
+        'Nowy tryb "Kiosk": po dodaniu przełącznika (?kiosk=1) w adresie aplikacja schowa elementy sterowalne interfejsu (Guzik Opcji, status synchronizacji i informacje o wersji). Z tego powodu wprowadzono też możliwość uruchamiania panelu opcji klawiszem "O" na klawiaturze.',
+      ]
+    },
     {
       version: '2.3.0',
       items: [

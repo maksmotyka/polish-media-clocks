@@ -9,6 +9,7 @@
     width: 100%;
     height: 100%;
     background-image: url(../../clock-assets/tvp-krakow/background.png);
+    background-image: image-set(url(../../clock-assets/tvp-krakow/background.webp) type("image/webp"), url(../../clock-assets/tvp-krakow/background.png) type("image/png"));
     background-size: contain;
     background-position: 50% 50%;
     background-repeat: no-repeat;
@@ -40,6 +41,7 @@
 
 .tvp-krakow-clock .second-hand-inner {
     background-image: url(../../clock-assets/tvp-krakow/hand-second.png);
+    background-image: image-set(url(../../clock-assets/tvp-krakow/hand-second.webp) type("image/webp"), url(../../clock-assets/tvp-krakow/hand-second.png) type("image/png"));
 }
 
 .tvp-krakow-clock .minute-hand {
@@ -48,6 +50,7 @@
 
 .tvp-krakow-clock .minute-hand-inner {
     background-image: url(../../clock-assets/tvp-krakow/hand-minute.png);
+    background-image: image-set(url(../../clock-assets/tvp-krakow/hand-minute.webp) type("image/webp"), url(../../clock-assets/tvp-krakow/hand-minute.png) type("image/png"));
 }
 
 .tvp-krakow-clock .hour-hand {
@@ -56,4 +59,5 @@
 
 .tvp-krakow-clock .hour-hand-inner {
     background-image: url(../../clock-assets/tvp-krakow/hand-hour.png);
+    background-image: image-set(url(../../clock-assets/tvp-krakow/hand-hour.webp) type("image/webp"), url(../../clock-assets/tvp-krakow/hand-hour.png) type("image/png"));
 }

@@ -56,6 +56,17 @@
             clockManager = new ClockManager();
             await clockManager.init();
         };
+
+        // Service Worker - działanie offline (patrz sw.js)
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                // updateViaCache: 'none' - sprawdzanie aktualizacji (także about-content.js)
+                // zawsze z sieci, z pominięciem cache HTTP przeglądarki
+                navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).catch((err) => {
+                    console.warn('Nie udało się zarejestrować Service Workera:', err);
+                });
+            });
+        }
     </script>
 </body>
 </html>
