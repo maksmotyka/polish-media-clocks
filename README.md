@@ -5,13 +5,23 @@ Aplikacja zegarowa synchronizowana z serwerami NTP Głównego Urzędu Miar (GUM)
 ## Funkcje aplikacji
 
 ### Synchronizacja czasu NTP
-Aplikacja została wyposażona we własny backend API, który komunikuje się z serwerem NTP Głównego Urzędu Miar (tzw. `Tempus`). W momencie uruchomienia aplikacji odpytuje ona API o dostrojenie się do sygnału czasu przekazywanego przez GUM. API próbuje uzyskać informację najpierw od serwera głównego (`tempus1`). Jeśli to się nie uda, próbuje uzyskać informacje od serwera zapasowego (`tempus2`). Kod i dokumentacja backendu znajdują się w katalogu [`backend/`](backend/README.md).
+Przeglądarka nie może bezpośrednio odpytywać serwerów NTP (protokół UDP), dlatego aplikacja korzysta z własnego backendu API, który komunikuje się z serwerami NTP Głównego Urzędu Miar (tzw. `Tempus`) i udostępnia wzorzec czasu przez HTTPS. Domyślna instancja działa pod adresem `https://timeserv.maksplus.xyz`. Kod źródłowy, opis API oraz instrukcja uruchomienia własnej instancji znajdują się w katalogu [`backend/`](backend/README.md) - adres backendu ustawia się w stałej `BACKEND_URL` w pliku `js/ntp-sync.js`.
 
-W przypadku niemożliwości połączenia się aplikacji z API lub brakiem informacji od serwerów GUM, aplikacja próbuje uzyskać informacje o wzorcu czasu z publicznie dostępnych usług API (`WorldTimeAPI`).
+W momencie uruchomienia aplikacja odpytuje backend, a ten próbuje kolejno źródeł czasu:
+1. `tempus1.gum.gov.pl` - główny serwer NTP GUM,
+2. `tempus2.gum.gov.pl` - zapasowy serwer NTP GUM,
+3. publiczne usługi HTTP (`WorldTimeAPI`, a w ostateczności nagłówek `Date:` z `cloudflare.com`) - gdy serwery GUM są niedostępne z poziomu backendu.
 
-Gdy wszystkie powyższe metody łączenia zawiodą, aplikacja pobiera czas z tego ustawionego w systemie użytkownika - w przypadku domyślnej konfiguracji systemów operacyjnych będzie to oznaczało dokładność +/- 1 sekundy (biorąc pod uwagę naturalny odchył zegara systemowego i niestałe dostrajanie się do wzorca czasu).
+Jeśli sam backend jest nieosiągalny, aplikacja próbuje pobrać czas bezpośrednio z `WorldTimeAPI`. Gdy wszystkie powyższe metody zawiodą, aplikacja korzysta z czasu ustawionego w systemie użytkownika - w przypadku domyślnej konfiguracji systemów operacyjnych będzie to oznaczało dokładność +/- 1 sekundy (biorąc pod uwagę naturalny odchył zegara systemowego i niestałe dostrajanie się do wzorca czasu).
 
-Stan połączenia raportowany jest zarówno poprzez "dymek" widoczny w lewym górnym rogu strony, jak również poprzez konsolę w narzędziach deweloperskich przeglądarki.
+Po synchronizacji aplikacja okresowo ponawia ją w tle (co 15 minut, po powrocie do karty po co najmniej 5 minutach od ostatniej synchronizacji oraz po wykryciu skoku czasu systemowego, np. po wybudzeniu komputera).
+
+Stan połączenia raportowany jest zarówno poprzez "dymek" widoczny w lewym górnym rogu strony, jak również poprzez konsolę w narzędziach deweloperskich przeglądarki:
+- 🟢 **GUM (tempus1)** - czas z głównego serwera GUM
+- 🟡 **GUM (tempus2)** - czas z zapasowego serwera GUM
+- 🟠 **Serwer zapasowy** - czas z publicznej usługi HTTP (bez udziału GUM, mniejsza dokładność)
+- 🔴 **Czas systemowy** - brak połączenia z jakimkolwiek wzorcem
+- ⚠️ **Utracono połączenie z serwerem** - ponowna synchronizacja nie powiodła się, aplikacja zachowuje ostatni uzyskany wzorzec
 
 ### Sygnał foniczny czasu (tzw. "GUM")
 Sygnał GUM-u można włączyć poprzez przełącznik w panelu "Opcje". Po włączeniu funkcji, aplikacja będzie ogłaszać pełną godzinę poprzez wyemitowanie fonicznego sygnału czasu o wysokości `940 Hz` składającego się z 6 pików: 5 oznajmiających ostatnie 5 sekund mijającej godziny oraz ostatni, wydłużony sygnał, którego początek oznacza punktualnie nową pełną godzinę.
@@ -106,6 +116,7 @@ polish-media-clocks/
 ├── js/
 │   ├── ntp-sync.js                    # Moduł synchronizacji NTP
 │   ├── clock-manager.js               # Zarządzanie zegarami i UI
+│   ├── about-content.js               # Treść okna "O projekcie"
 │   └── skins/
 │       ├── classic-clock.js           # Logika zegara Polskiego Radia
 │       ├── teleexpress-clock.js       # Logika zegara Teleexpressu
@@ -117,7 +128,14 @@ polish-media-clocks/
 │   ├── tvp-1993/                      # TVP 1993-2012
 │   ├── tvp-2012/                      # TVP 2012-dziś
 │   └── tvp-krakow/                    # TVP Kraków
-└── fonts/                             # Czcionki (DigiClock)
+├── fonts/                             # Czcionki (DigiClock)
+└── backend/                           # Backend API - serwer czasu (Python/Flask)
+    ├── app.py                         # Aplikacja: NTP GUM + fallbacki HTTP
+    ├── requirements.txt               # Zależności Pythona
+    ├── install.sh                     # Instalacja na Ubuntu (systemd + Nginx)
+    ├── ntp-backend.service            # Usługa systemd
+    ├── nginx-timeserv.conf            # Konfiguracja reverse proxy
+    └── README.md                      # Dokumentacja API i instalacji
 ```
 
 ### Moduły
@@ -133,6 +151,11 @@ polish-media-clocks/
 - Dynamiczne ładowanie stylów CSS
 - Obsługa kontrolek i GUM
 - Wyświetlanie statusu synchronizacji
+
+**Backend API (backend/)**
+- Pobieranie czasu z serwerów NTP GUM (`tempus1`, `tempus2`)
+- Fallbacki HTTP, gdy NTP jest niedostępne
+- Endpointy `/api/time`, `/health` - szczegóły w [`backend/README.md`](backend/README.md)
 
 **Skórki zegarów (js/skins/)**
 - Każda skórka to osobna klasa
