@@ -1,0 +1,24 @@
+[Unit]
+Description=NTP Backend - serwer czasu dla Polish Media Clocks
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ntp-backend
+Group=ntp-backend
+WorkingDirectory=/opt/ntp-backend
+ExecStart=/opt/ntp-backend/venv/bin/gunicorn --bind 127.0.0.1:8080 --workers 1 --timeout 30 app:app
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+# Ograniczenie uprawnień usługi
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

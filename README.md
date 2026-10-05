@@ -5,7 +5,7 @@ Aplikacja zegarowa synchronizowana z serwerami NTP Głównego Urzędu Miar (GUM)
 ## Funkcje aplikacji
 
 ### Synchronizacja czasu NTP
-Aplikacja została wyposażona we własny backend API, który komunikuje się z serwerem NTP Głównego Urzędu Miar i Wag (tzw. `Tempus`). W momencie uruchomienia aplikacji odpytuje ona API o dostrojenie się do sygnału czasu przekazywanego przez GUM. API próbuje uzyskać informację najpierw od serwera głównego (`tempus1`). Jeśli to się nie uda, próbuje uzyskać informacje od serwera zapasowego (`tempus2`).
+Aplikacja została wyposażona we własny backend API, który komunikuje się z serwerem NTP Głównego Urzędu Miar (tzw. `Tempus`). W momencie uruchomienia aplikacji odpytuje ona API o dostrojenie się do sygnału czasu przekazywanego przez GUM. API próbuje uzyskać informację najpierw od serwera głównego (`tempus1`). Jeśli to się nie uda, próbuje uzyskać informacje od serwera zapasowego (`tempus2`). Kod i dokumentacja backendu znajdują się w katalogu [`backend/`](backend/README.md).
 
 W przypadku niemożliwości połączenia się aplikacji z API lub brakiem informacji od serwerów GUM, aplikacja próbuje uzyskać informacje o wzorcu czasu z publicznie dostępnych usług API (`WorldTimeAPI`).
 
@@ -19,12 +19,24 @@ Sygnał GUM-u można włączyć poprzez przełącznik w panelu "Opcje". Po włą
 - `xx:59:55` - `xx:59:59` - Sygnał o długości 100ms
 - `xx+1:00:00` - Sygnał o długości 300ms
 
-Aplikacja emituje podobną sekwencję sygnału czasu również w momencie upłynięcia połowy godziny, tzn. w zakresie `xx:29:55` - `xx:30:00`.
+Częstotliwość sygnału wybiera się z listy w sekcji "Zaawansowane" pod przełącznikiem GUM:
+- **Co pół godziny** (domyślnie) - dodatkowo w zakresie `xx:29:55` - `xx:30:00`
+- **Co godzinę** - tylko o pełnej godzinie
+- **Co minutę** - dla wytrwałych: sekwencja przed każdą pełną minutą
 
-### Dostępne parametry adresowe
-`antena=1` - przesuwa dźwięk GUM-u o ok. 700ms - 1 sekundę do przodu / kompensacja opóźnienia FM - pełna godzina anonsowana jest dłuższym pikiem o godz `~xx:59:59.300`. Jest to mechanizm stosowany w Polskim Radiu - dzięki takiemu przesunięciu słuchacz odbierający rozgłośnię poprzez FM usłyszy pik o pełnej godzinie.
+Wszystkie ustawienia GUM-u (włączenie, częstotliwość i opcje zaawansowane) są zapamiętywane w przeglądarce. Ze względu na politykę autoodtwarzania przeglądarek dźwięk zacznie działać dopiero po pierwszym kliknięciu w stronę.
 
-`gum-test=1` - aktywacja pików testowych - Zegar po zaznaczeniu opcji GUM wydaje również 30 pików kontrolnych: od `xx:59:15` do `xx:59:45` oraz od `xx:29:15` do `xx:29:45`.
+### Opcje zaawansowane GUM-u
+Po zaznaczeniu opcji GUM pod przełącznikiem pojawia się zwijana sekcja "Zaawansowane" z wyborem częstotliwości oraz dwiema dodatkowymi opcjami. Każdą z tych dwóch opcji można też wymusić parametrem w adresie strony:
+
+**Kompensacja opóźnienia FM** (`antena=1`) - przesuwa dźwięk GUM-u o ok. 700ms - 1 sekundę do przodu / kompensacja opóźnienia FM - pełna godzina anonsowana jest dłuższym pikiem o godz `~xx:59:59.300`. Jest to mechanizm stosowany w Polskim Radiu - dzięki takiemu przesunięciu słuchacz odbierający rozgłośnię poprzez FM usłyszy pik o pełnej godzinie.
+
+**Piki testowe** (`gum-test=1`) - Zegar wydaje również 31 pików kontrolnych: od `xx:59:15` do `xx:59:45` oraz (przy trybie innym niż "co godzinę") od `xx:29:15` do `xx:29:45`.
+
+### Tryb kiosk i skróty klawiszowe
+`kiosk=1` - ukrywa elementy interfejsu: przycisk "Opcje", status wzorca czasu oraz powiadomienie o nowej wersji. Przydatne przy wyświetlaniu zegara na ekranie lub jako źródło w programie do realizacji wizji. Status wzorca czasu można mimo to przywrócić opcją "Pokaż status wzorca czasu".
+
+Panel opcji można w każdym trybie otworzyć i zamknąć klawiszem `O`, a zamknąć również klawiszem `Esc`.
 
 ### Panel "O projekcie"
 Aplikacja zawiera wbudowany panel informacyjny dostępny z menu "Opcje". Panel zawiera:
