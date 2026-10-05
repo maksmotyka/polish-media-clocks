@@ -4,8 +4,8 @@
 
 @font-face {
     font-family: 'DigiClock';
-    src: url('../fonts/DigiClock.woff') format('woff'),
-         url('../fonts/DigiClock.woff2') format('woff2'),
+    src: url('../fonts/DigiClock.woff2') format('woff2'),
+         url('../fonts/DigiClock.woff') format('woff'),
          url('../fonts/DigiClock.svg#DigiClock') format('svg'),
          url('../fonts/DigiClock.eot'),
          url('../fonts/DigiClock.eot?#iefix') format('embedded-opentype'),
@@ -28,6 +28,7 @@ body {
 /* Domyślne tło dla zegara klasycznego */
 body.skin-classic {
     background-image: url(../clock-assets/classic/background.jpg);
+    background-image: image-set(url(../clock-assets/classic/background.webp) type("image/webp"), url(../clock-assets/classic/background.jpg) type("image/jpeg"));
     background-size: cover;
     background-attachment: fixed;
 }
@@ -45,7 +46,8 @@ body.skin-tvp-krakow {
 
 /* Tło z obrazem dla TVP 2012 */
 body.skin-tvp-2012 {
-    background-image: url(../clock-assets/tvp-2012/background.png);
+    background-image: url(../clock-assets/tvp-2012/background.jpg);
+    background-image: image-set(url(../clock-assets/tvp-2012/background.webp) type("image/webp"), url(../clock-assets/tvp-2012/background.jpg) type("image/jpeg"));
     background-size: cover;
     background-attachment: fixed;
 }
@@ -186,4 +188,15 @@ body.skin-tvp-2012 {
     opacity: 0;
     pointer-events: none;
     transform: translateY(-10px);
+}
+
+/* Tryb kiosk (?kiosk=1) - panel opcji dostępny pod klawiszem "O" */
+body.kiosk #controls-toggle,
+body.kiosk #version-notification,
+body.kiosk #sync-status:not(.pinned) {
+    display: none;
+}
+
+body.kiosk #controls {
+    top: 10px;
 }
