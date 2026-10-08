@@ -168,4 +168,7 @@ polish-media-clocks/
 - Wspólny interfejs dla łatwej wymiany
 - Możliwość dodawania nowych stylów bez modyfikacji istniejącego kodu
 
+## Kontakt
+Uwagi, zgłoszenia błędów i pomysły: [hello@maksmotyka.xyz](mailto:hello@maksmotyka.xyz)
+
 ## [Uruchom zegar](https://maksmotyka.github.io/polish-media-clocks/)
