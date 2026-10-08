@@ -1019,6 +1019,8 @@ class ClockManager {
             ${h3('Funkcje')}
             ${featuresSection}
 
+            ${c && c.about.contact ? h3('Kontakt') + `<p style="line-height: 1.6; font-size: 14px;">Uwagi, błędy, pomysły: <a href="mailto:${c.about.contact}" style="color: white; text-decoration: underline;">${c.about.contact}</a></p>` : ''}
+
             ${h3('Prawa autorskie i licencja')}
             ${legalSection}
 

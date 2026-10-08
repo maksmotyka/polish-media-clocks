@@ -3,10 +3,11 @@
 // =============================================================================
 
 window.ABOUT_CONTENT = {
-  version: '2.4.0',
+  version: '2.4.1',
   about: {
     description: 'Aplikacja zegarowa synchronizowana z serwerami NTP Głównego Urzędu Miar (GUM). Zawiera kolekcję stylów zegarów inspirowanych systemami stosowanymi w historii polskiej telewizji i radia.',
-    copyright: '© Maksymilian Motyka 2026'
+    copyright: '© Maksymilian Motyka 2026',
+    contact: 'hello@maksmotyka.xyz'
   },
   skins: [
     {
@@ -46,6 +47,16 @@ window.ABOUT_CONTENT = {
     'Kod źródłowy projektu udostępniony jest wyłącznie w celach edukacyjnych i hobbystycznych.'
   ],
   changelog: [
+    {
+      version: '2.4.1',
+      items: [
+        'Poprawiono błąd związany z wyświetlaniem informacji o wersji aplikacji',
+        'Przyspieszenie działania aplikacji: Grafiki i elementy interfejsu korzystają od teraz ze lżejszych plików WebP.Zachowano kompatybilność wsteczną ze starszymi przeglądarkami - te załadują stare pliki png/jpg.',
+        'Tryb offline: Wraz z załadowaniem aplikacji w nowej wersji Twoje urządzenie pobrało logikę i skórki do swojej pamięci - aplikację od teraz uruchomisz nawet bez dostępu do internetu!',
+        'Przebudowanie GUM-u: Po włączeniu pokazują się ustawienia zaawansowane - częstotliwość emisji sygnału oraz przyciski włączające kompensację FM oraz piki testowe. Przełączniki adresowe (antena) oraz (gum-test) wciąż działają. Uwaga! Przyciski w menu opcje mają "pamięć" i zapamiętują w cache swoje ustawienia.',
+        'Nowy tryb "Kiosk": po dodaniu przełącznika (?kiosk=1) w adresie aplikacja schowa elementy sterowalne interfejsu (Guzik Opcji, status synchronizacji i informacje o wersji). Z tego powodu wprowadzono też możliwość uruchamiania panelu opcji klawiszem "O" na klawiaturze.',
+      ]
+    },
     {
       version: '2.4.0',
       items: [
